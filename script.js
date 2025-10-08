@@ -118,8 +118,15 @@ function detectCollisions() {
     if (distance < 40) {
       showFact();
       orbs.splice(i, 1);
+      score += 50; // bonus for collecting an orb
     }
   });
+}
+
+function drawScore() {
+  ctx.fillStyle = "#000";
+  ctx.font = "24px Trebuchet MS";
+  ctx.fillText(`Score: ${score}`, 20, 40);
 }
 
 function endGame() {
@@ -137,6 +144,7 @@ function update() {
   drawObstacles();
   drawOrbs();
   drawPlayer();
+  drawScore();
 
   player.y += player.dy;
   if (player.y + player.h < canvas.height - 60) {
