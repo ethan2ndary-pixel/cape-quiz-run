@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cape Mountains Runner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="start-screen" class="screen">
+    <h1>Cape Mountains Runner</h1>
+    <p class="subtitle">An educational game about the Cape Mountains</p>
+    <p class="how-to">
+      🏃‍♂️ <strong>How to Play:</strong><br>
+      Tap or press <b>Space</b> to jump.<br>
+      Collect glowing orbs 💡 to learn fun facts.<br>
+      Avoid rocks ⛰️ to keep running.<br>
+      See how far you can go!
+    </p>
+    <p class="credit">Created by Ethan</p>
+    <button id="start-button">Start Game</button>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="game-over" class="screen hidden">
+    <h2>Game Over!</h2>
+    <p id="fact-display"></p>
+    <button id="restart-button">Restart</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
