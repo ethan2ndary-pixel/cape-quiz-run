@@ -1,350 +1,255 @@
-/* Cape Mountains Quiz Runner — low-gravity jump + gradual speed increase
-   - Full-screen canvas
-   - Photo parallax background (replace URLs below)
-   - Spikes obstacles (triangles)
-   - Quiz orbs (multiple choice, pause game)
-   - Top-5 scoreboard with first name saved in localStorage
-   - Low gravity jump and speedFactor that ramps up with distance
-*/
-
-/* ------------------ BACKGROUNDS (replace if you wish) ------------------ */
-const backgroundImages = [
-  "https://upload.wikimedia.org/wikipedia/commons/2/25/Table_mountain_and_the_ocean_cape_town.JPG",
-  "https://upload.wikimedia.org/wikipedia/commons/8/8e/Table_Mountain_-_South_Africa_%2824185367888%29.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/a/a3/Cape_Town_-_2018-07-16_-_Table_Mountain_-_7645.jpg"
-];
-
-/* ------------------ QUESTIONS (8th-grade, multiple choice) ------------------ */
-let questions = [
-  { q: "Which flat-topped mountain overlooks the city of Cape Town?", choices: ["Lion's Head","Table Mountain","Devil's Peak","Signal Hill"], answer: 1, points: 100 },
-  { q: "Which ocean lies to the west of Cape Town?", choices: ["Atlantic Ocean","Indian Ocean","Pacific Ocean","Southern Ocean"], answer: 0, points: 100 },
-  { q: "What type of vegetation is Fynbos?", choices: ["Shrubland","Tropical forest","Grassland","Wetland"], answer: 0, points: 100 },
-  { q: "The Cape Fold Belt formed mainly by which process?", choices: ["Volcanic eruptions","Tectonic folding and uplift","Glacial carving","Sea-level rise"], answer: 1, points: 120 },
-  { q: "Why are Cape mountains important for water supply?", choices: ["They capture rain and fog feeding streams","They produce underground oil","They trap salt for desalination","They block storms completely"], answer: 0, points: 90 },
-  { q: "Which animal is adapted to rocky mountain areas in the Cape?", choices: ["Klipspringer","Penguin","Elephant","Giraffe"], answer: 0, points: 90 },
-  { q: "Which wind can make the Cape region dry and warm?", choices: ["Bergwind (Föhn)","Mistral","Monsoon","Sirocco"], answer: 0, points: 100 }
-];
-
-/* ------------------ CORE / UI ELEMENT SELECTORS ------------------ */
+// === Setup ===
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const startBtn = document.getElementById("startBtn");
-const restartBtn = document.getElementById("restartBtn");
-const menuBtn = document.getElementById("menuBtn");
-const editQuestionsBtn = document.getElementById("editQuestionsBtn");
-const startScreen = document.getElementById("startScreen");
-const gameOverScreen = document.getElementById("gameOver");
-const questionBox = document.getElementById("questionBox");
-const questionText = document.getElementById("questionText");
-const answersEl = document.getElementById("answers");
-const toast = document.getElementById("toast");
-const scoreEl = document.getElementById("score");
-const highScoreEl = document.getElementById("highScore");
-const scoreboardEl = document.getElementById("scoreboard");
-const playerNameInput = document.getElementById("playerName");
-const saveScoreBtn = document.getElementById("saveScoreBtn");
-const finalScoreEl = document.getElementById("finalScore");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let W = innerWidth, H = innerHeight;
-canvas.width = W; canvas.height = H;
-window.addEventListener("resize", ()=>{ W = innerWidth; H = innerHeight; canvas.width = W; canvas.height = H; });
+// === Elements ===
+const startScreen = document.getElementById("start-screen");
+const startButton = document.getElementById("start-button");
+const quizPopup = document.getElementById("quiz-popup");
+const quizQuestion = document.getElementById("quiz-question");
+const quizOptions = document.getElementById("quiz-options");
+const gameOverScreen = document.getElementById("game-over");
+const finalScore = document.getElementById("final-score");
+const saveScoreButton = document.getElementById("save-score");
+const restartButton = document.getElementById("restart");
+const playerNameInput = document.getElementById("player-name");
+const scoreList = document.getElementById("score-list");
 
-/* ------------------ STATE & PERSISTENCE ------------------ */
-let running=false, lastTime=0;
-let player, obstacles, orbs;
-let distance=0, score=0;
-let highScoreList = JSON.parse(localStorage.getItem("capeHighScores")||"[]"); // [{name,score}]
-let bgLayers = [];
-let spawnTimer=0, orbTimer=0, nextQuestionAt=400 + Math.random()*200;
+// === Game Variables ===
+let player, spikes, orbs, gravity, jumpPower, gameSpeed, score, quizActive, gameRunning;
 
-/* ---------- GAME TUNING (low gravity + ramp) ---------- */
-let gravity = 0.9;        // lower gravity for floaty jumps (smaller => floatier)
-const jumpVy = -14;       // initial jump velocity (negative = up)
-const baseSpeed = 6;      // base movement multiplier (used to move obstacles/orbs)
-const speedRampFactor = 1/5000; // how fast speedFactor grows with distance
-const speedCap = 3.0;     // maximum speed multiplier cap
+// === Load Background Image ===
+const backgroundImg = new Image();
+backgroundImg.src = "https://upload.wikimedia.org/wikipedia/commons/2/25/Table_Mountain_from_Bloubergstrand.jpg";
 
-/* ------------------ Scoreboard functions (persistent) ------------------ */
-function saveTopScore(name, sc){
-  const entry = { name: (name || "Player").slice(0,24), score: Math.floor(sc) };
-  highScoreList.push(entry);
-  highScoreList.sort((a,b)=>b.score - a.score);
-  if(highScoreList.length > 5) highScoreList = highScoreList.slice(0,5);
-  localStorage.setItem("capeHighScores", JSON.stringify(highScoreList));
-  renderScoreboard();
+// === Setup Local High Scores ===
+let highScores = JSON.parse(localStorage.getItem("capeHighScores")) || [];
+
+// === Player Object ===
+function createPlayer() {
+  return {
+    x: 150,
+    y: canvas.height - 100,
+    width: 50,
+    height: 80,
+    vy: 0,
+    color: "#222",
+    jumping: false,
+  };
 }
-function renderScoreboard(){
-  scoreboardEl.innerHTML = "";
-  if(highScoreList.length === 0){
-    scoreboardEl.innerHTML = "<div style='padding:8px;color:#f0f0f0;opacity:.9'>No scores yet — be the first!</div>";
-    return;
+
+// === Reset Game ===
+function resetGame() {
+  player = createPlayer();
+  spikes = [];
+  orbs = [];
+  gravity = 0.4;        // LOW GRAVITY feel 🌙
+  jumpPower = -10;
+  gameSpeed = 6;
+  score = 0;
+  quizActive = false;
+  gameRunning = true;
+  gameLoop();
+}
+
+// === Controls ===
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !quizActive && gameRunning) {
+    jump();
   }
-  highScoreList.forEach((r, i)=>{
-    const row = document.createElement("div");
-    row.className = "row";
-    row.innerHTML = `<div>${i+1}. ${escapeHtml(r.name)}</div><div>${r.score}</div>`;
-    scoreboardEl.appendChild(row);
+});
+window.addEventListener("touchstart", () => {
+  if (!quizActive && gameRunning) jump();
+});
+
+// === Jump Function ===
+function jump() {
+  if (!player.jumping) {
+    player.vy = jumpPower;
+    player.jumping = true;
+  }
+}
+
+// === Spikes + Orbs ===
+function spawnSpike() {
+  spikes.push({
+    x: canvas.width,
+    y: canvas.height - 60,
+    width: 40,
+    height: 60,
+    color: "#654321",
   });
 }
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-renderScoreboard();
-
-/* ------------------ Background preloader ------------------ */
-function preloadBackgrounds(list, cb){
-  bgLayers = list.map((url,i)=>({img:new Image(), x:0, speed: 0.2 + i*0.25, url}));
-  let loaded=0;
-  bgLayers.forEach(b=>{
-    b.img.crossOrigin = "anonymous";
-    b.img.onload = ()=>{ loaded++; if(loaded===bgLayers.length) cb && cb(); };
-    b.img.onerror = ()=>{ console.warn("bg load error:", b.url); loaded++; if(loaded===bgLayers.length) cb && cb(); };
-    b.img.src = b.url;
+function spawnOrb() {
+  orbs.push({
+    x: canvas.width,
+    y: canvas.height - 120,
+    radius: 20,
+    color: "gold",
   });
 }
 
-/* ------------------ Game reset/start ------------------ */
-function resetGame(){
-  player = {x:140, y:H*0.75 - 80, w:44, h:72, vy:0, jumping:false};
-  obstacles = []; orbs = [];
-  distance = 0; score = 0;
-  running = true; lastTime = performance.now();
-  spawnTimer = 0; orbTimer = 0; nextQuestionAt = 400 + Math.random()*200;
-  playerNameInput.value = "";
-  saveScoreBtn.disabled = true;
-  canvas.style.display = "block";
-  questionBox.classList.add("hidden");
-}
-function start(){
-  startScreen.classList.add("hidden");
-  gameOverScreen.classList.add("hidden");
-  preloadBackgrounds(backgroundImages, ()=>{ resetGame(); requestAnimationFrame(loop); });
+// === Quiz Questions (you can edit these!) ===
+const questions = [
+  {
+    q: "Which city is closest to Table Mountain?",
+    options: ["Cape Town", "Johannesburg", "Durban", "Pretoria"],
+    answer: 0,
+  },
+  {
+    q: "What type of rock mainly makes up Table Mountain?",
+    options: ["Granite", "Sandstone", "Limestone", "Basalt"],
+    answer: 1,
+  },
+  {
+    q: "The Cape Floristic Region is famous for its:",
+    options: ["Deserts", "Rainforests", "Fynbos", "Savannas"],
+    answer: 2,
+  },
+];
+
+// === Game Loop ===
+function gameLoop() {
+  if (!gameRunning) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(backgroundImg, -score * 0.5, 0, canvas.width * 2, canvas.height); // Scrolling bg
+
+  // Gravity
+  player.y += player.vy;
+  player.vy += gravity;
+
+  // Ground collision
+  if (player.y > canvas.height - 100) {
+    player.y = canvas.height - 100;
+    player.vy = 0;
+    player.jumping = false;
+  }
+
+  // Draw player
+  ctx.fillStyle = player.color;
+  ctx.fillRect(player.x, player.y - player.height, player.width, player.height);
+
+  // Spawn spikes/orbs randomly
+  if (Math.random() < 0.01) spawnSpike();
+  if (Math.random() < 0.005) spawnOrb();
+
+  // Move + draw spikes
+  spikes.forEach((spike, i) => {
+    spike.x -= gameSpeed;
+    ctx.beginPath();
+    ctx.moveTo(spike.x, spike.y);
+    ctx.lineTo(spike.x + spike.width / 2, spike.y - spike.height);
+    ctx.lineTo(spike.x + spike.width, spike.y);
+    ctx.closePath();
+    ctx.fillStyle = spike.color;
+    ctx.fill();
+
+    if (spike.x + spike.width < 0) spikes.splice(i, 1);
+
+    // Collision check
+    if (
+      player.x < spike.x + spike.width &&
+      player.x + player.width > spike.x &&
+      player.y > spike.y - spike.height
+    ) {
+      endGame();
+    }
+  });
+
+  // Move + draw orbs
+  orbs.forEach((orb, i) => {
+    orb.x -= gameSpeed;
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+    ctx.fillStyle = orb.color;
+    ctx.fill();
+    if (orb.x + orb.radius < 0) orbs.splice(i, 1);
+
+    // Collision with orb
+    if (
+      player.x < orb.x + orb.radius &&
+      player.x + player.width > orb.x - orb.radius &&
+      player.y - player.height < orb.y + orb.radius &&
+      player.y > orb.y - orb.radius
+    ) {
+      orbs.splice(i, 1);
+      showQuestion();
+    }
+  });
+
+  // Score and speed
+  score += 1;
+  if (score % 500 === 0) gameSpeed += 0.5; // slowly increase speed
+
+  ctx.fillStyle = "black";
+  ctx.font = "24px Trebuchet MS";
+  ctx.fillText("Score: " + score, 20, 40);
+
+  if (!quizActive) requestAnimationFrame(gameLoop);
 }
 
-/* ------------------ Input (jump uses low-gravity behavior) ------------------ */
-function jump(){ if(!player.jumping){ player.vy = jumpVy; player.jumping = true; } }
-window.addEventListener("keydown", e=>{ if(e.code==="Space"){ e.preventDefault(); if(!running) start(); else jump(); } });
-canvas.addEventListener("pointerdown", ()=>{ if(!running) start(); else jump(); });
+// === Quiz Popup ===
+function showQuestion() {
+  quizActive = true;
+  const q = questions[Math.floor(Math.random() * questions.length)];
+  quizQuestion.textContent = q.q;
+  quizOptions.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.onclick = () => {
+      if (i === q.answer) score += 100;
+      quizPopup.classList.add("hidden");
+      quizActive = false;
+      gameLoop();
+    };
+    quizOptions.appendChild(btn);
+  });
+  quizPopup.classList.remove("hidden");
+}
 
-startBtn.onclick = ()=> start();
-restartBtn.onclick = ()=> { gameOverScreen.classList.add("hidden"); start(); };
-menuBtn.onclick = ()=> { gameOverScreen.classList.add("hidden"); startScreen.classList.remove("hidden"); running=false; };
-editQuestionsBtn.onclick = ()=> {
-  const payload = prompt("Edit questions JSON (array of {q,choices,answer,points}):\n\nCurrent JSON will appear; edit carefully.", JSON.stringify(questions, null, 2));
-  if(payload){ try{ const parsed = JSON.parse(payload); if(Array.isArray(parsed)){ questions = parsed; alert("Questions updated!"); } else alert("Please provide an array."); } catch(err){ alert("Invalid JSON: " + err.message); } }
+// === Game Over ===
+function endGame() {
+  gameRunning = false;
+  canvas.style.display = "none";
+  gameOverScreen.classList.remove("hidden");
+  finalScore.textContent = `Your Score: ${score}`;
+}
+
+// === Save Score ===
+saveScoreButton.onclick = () => {
+  const name = playerNameInput.value.trim() || "Player";
+  highScores.push({ name, score });
+  highScores.sort((a, b) => b.score - a.score);
+  highScores = highScores.slice(0, 5);
+  localStorage.setItem("capeHighScores", JSON.stringify(highScores));
+  location.reload();
 };
 
-/* enable Save button only when a name is present */
-playerNameInput.addEventListener("input", ()=>{
-  saveScoreBtn.disabled = playerNameInput.value.trim().length === 0;
-});
-saveScoreBtn.addEventListener("click", ()=>{
-  const name = playerNameInput.value.trim() || "Player";
-  saveTopScore(name, score);
-  // After saving, return to start screen
+// === Start & Restart Buttons ===
+startButton.onclick = () => {
+  startScreen.style.display = "none";
+  canvas.style.display = "block";
+  resetGame();
+};
+
+restartButton.onclick = () => {
   gameOverScreen.classList.add("hidden");
-  startScreen.classList.remove("hidden");
-});
+  canvas.style.display = "block";
+  resetGame();
+};
 
-/* ------------------ Spawns & collisions ------------------ */
-function spawnSpike(){
-  const w = 40 + Math.random()*40;
-  const h = 36 + Math.random()*50;
-  obstacles.push({x: W + 60, y: H*0.75 - h, w: w, h: h});
-}
-function spawnOrb(isQuestion=false){
-  orbs.push({x: W + 60, y: H*0.75 - 130 - Math.random()*160, r:16, question:isQuestion});
-}
-function rectIntersect(a,b){ return !(b.x>a.x+a.w || b.x+b.w<a.x || b.y>a.y+a.h || b.y+b.h<a.y); }
-function circleRect(cx,cy,r,rx,ry,rw,rh){ const nx = Math.max(rx, Math.min(cx, rx+rw)); const ny = Math.max(ry, Math.min(cy, ry+rh)); const dx = cx - nx, dy = cy - ny; return dx*dx + dy*dy <= r*r; }
-
-/* ------------------ Question flow ------------------ */
-function showQuestion(qobj, onAnswer){
-  questionText.textContent = qobj.q;
-  answersEl.innerHTML = "";
-  qobj.choices.forEach((c, idx)=>{
-    const b = document.createElement("button");
-    b.className = "answerBtn";
-    b.textContent = c;
-    b.onclick = ()=>{
-      const correct = idx === qobj.answer;
-      if(correct){ b.classList.add("correct"); showToast("Correct! +" + (qobj.points||100) + " pts"); score += (qobj.points||100); }
-      else { b.classList.add("wrong"); showToast("Wrong"); score = Math.max(0, score - (qobj.points? Math.floor(qobj.points/4):10)); }
-      Array.from(answersEl.children).forEach(btn=>btn.disabled=true);
-      setTimeout(()=>{ questionBox.classList.add("hidden"); onAnswer(correct); }, 800);
-    };
-    answersEl.appendChild(b);
-  });
-  questionBox.classList.remove("hidden");
-}
-
-/* ------------------ Visuals & Draw helpers ------------------ */
-function drawBackground(dt, speedFactor){
-  bgLayers.forEach((b, idx)=>{
-    const speed = b.speed * (0.4 + idx*0.6) * speedFactor;
-    b.x -= speed * (dt/16);
-    const img = b.img;
-    if(!img || !img.complete){
-      ctx.fillStyle = idx===0 ? "#dfeffd" : "#cbe6ff"; ctx.fillRect(0, idx*30, W, H*(0.7 - idx*0.05)); return;
-    }
-    const scale = Math.max(W / img.width, (H*0.7) / img.height);
-    const drawW = img.width * scale, drawH = img.height * scale;
-    let x = b.x % drawW;
-    for(let i=-1;i<Math.ceil(W/drawW)+2;i++){
-      ctx.drawImage(img, x + i*drawW, 0, drawW, drawH);
-    }
+// === Show Saved Scores on Start ===
+function showHighScores() {
+  scoreList.innerHTML = "";
+  highScores.forEach((s) => {
+    const li = document.createElement("li");
+    li.textContent = `${s.name}: ${s.score}`;
+    scoreList.appendChild(li);
   });
 }
-
-function drawSpikes(speedFactor){
-  ctx.fillStyle = "#5a3d32";
-  obstacles.forEach(s=>{
-    const cols = 3;
-    const partW = s.w/cols;
-    for(let i=0;i<cols;i++){
-      const px = s.x + i*partW;
-      const ph = s.h * (0.6 + (i*0.05));
-      ctx.beginPath();
-      ctx.moveTo(px, s.y + s.h);
-      ctx.lineTo(px + partW/2, s.y + s.h - ph);
-      ctx.lineTo(px + partW, s.y + s.h);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "rgba(0,0,0,0.08)";
-      ctx.beginPath();
-      ctx.moveTo(px + partW*0.25, s.y + s.h);
-      ctx.lineTo(px + partW/2, s.y + s.h - ph*0.6);
-      ctx.lineTo(px + partW*0.75, s.y + s.h);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#5a3d32";
-    }
-    s.x -= baseSpeed * speedFactor;
-  });
-}
-
-function drawOrbs(speedFactor){
-  orbs.forEach(o=>{
-    const t = performance.now()/300;
-    ctx.beginPath();
-    ctx.shadowColor = "rgba(255,240,160,0.6)"; ctx.shadowBlur = 14;
-    ctx.fillStyle = "rgba(255,255,160,0.95)";
-    ctx.arc(o.x, o.y + Math.sin(t)*4, o.r, 0, Math.PI*2); ctx.fill();
-    ctx.shadowBlur = 0;
-    o.x -= baseSpeed * speedFactor;
-  });
-}
-
-function drawHuman(x,y,w,h){
-  ctx.save();
-  ctx.fillStyle = "rgba(0,0,0,0.18)";
-  ctx.beginPath(); ctx.ellipse(x + w/2, y + h + 8, w*0.6, 10, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#e6b089";
-  ctx.beginPath(); ctx.arc(x + w*0.5, y + 12, w*0.22, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#2b6cb0";
-  roundRect(ctx, x + w*0.1, y + h*0.18, w*0.8, h*0.44, 8); ctx.fill();
-  ctx.fillStyle = "#2b2b2b";
-  ctx.fillRect(x + w*0.12, y + h*0.64, w*0.22, h*0.28);
-  ctx.fillRect(x + w*0.62, y + h*0.54, w*0.22, h*0.28);
-  ctx.strokeStyle = "#e6b089"; ctx.lineWidth = 8; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(x + w*0.88, y + h*0.32); ctx.lineTo(x + w*0.6, y + h*0.45); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + w*0.12, y + h*0.32); ctx.lineTo(x + w*0.4, y + h*0.45); ctx.stroke();
-  ctx.restore();
-}
-
-function draw(dt, speedFactor){
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = "#cfeeff"; ctx.fillRect(0,0,W,H);
-  drawBackground(dt, speedFactor);
-  ctx.fillStyle = "#32492f"; ctx.fillRect(0, H*0.75, W, H*0.25);
-  drawSpikes(speedFactor);
-  drawOrbs(speedFactor);
-  drawHuman(player.x, player.y, player.w, player.h);
-  scoreEl.textContent = "Score: " + Math.floor(score);
-  highScoreEl.textContent = "High: " + (highScoreList[0]? highScoreList[0].score:0);
-}
-
-/* ------------------ Loop (uses speedFactor based on distance) ------------------ */
-let lastSpawn = 0;
-function loop(t){
-  if(!running) return;
-  const dt = Math.max(16, t - lastTime); lastTime = t;
-
-  // compute speed factor increasing slowly with distance
-  const rawFactor = 1 + distance * speedRampFactor; // grows with distance
-  const speedFactor = Math.min(rawFactor, speedCap); // limit cap
-
-  // update distance & passive score (scaled by speedFactor lightly)
-  distance += (dt/1000) * 220 * (0.9 + speedFactor*0.35);
-  score += 0.01 * (dt) * speedFactor;
-
-  // low-gravity physics: smaller gravity applied so jump is floatier
-  player.vy += gravity * (dt/16);
-  player.y += player.vy;
-  if(player.y > H*0.75 - player.h){ player.y = H*0.75 - player.h; player.vy = 0; player.jumping=false; }
-
-  // spawns scaled by speedFactor to keep challenge pace
-  lastSpawn += dt;
-  if(lastSpawn > Math.max(500, 900 - Math.min(500, distance*0.01))){
-    spawnSpike(); lastSpawn = 0;
-  }
-  orbTimer += dt;
-  if(orbTimer > Math.max(900, 1600 - Math.min(800, distance*0.02))){
-    const isQuestion = distance > nextQuestionAt && Math.random() < 0.45;
-    spawnOrb(isQuestion);
-    if(isQuestion) nextQuestionAt = distance + 800 + Math.random()*600;
-    orbTimer = 0;
-  }
-
-  // move spikes & collisions (collision logic same)
-  for(let i=obstacles.length-1;i>=0;i--){
-    const s = obstacles[i];
-    if(s.x + s.w < -60){ obstacles.splice(i,1); continue; }
-    if(player.x + player.w > s.x + 6 && player.x < s.x + s.w - 6 && player.y + player.h > s.y + s.h*0.15){
-      running = false; gameOver(); return;
-    } else {
-      // movement already handled in drawSpikes by subtracting baseSpeed * speedFactor
-      // we still need to update position for non-drawing cases
-      s.x -= baseSpeed * speedFactor;
-    }
-  }
-
-  // orbs movement & collision
-  for(let i=orbs.length-1;i>=0;i--){
-    const o = orbs[i];
-    if(o.x + o.r < -60){ orbs.splice(i,1); continue; }
-    if(circleRect(o.x, o.y, o.r, player.x, player.y, player.w, player.h)){
-      if(o.question){
-        running = false;
-        const qIdx = Math.floor(Math.random()*questions.length);
-        const q = questions[qIdx];
-        showQuestion(q, (correct)=>{ running = true; lastTime = performance.now(); });
-      } else {
-        score += 60; showToast("+60");
-      }
-      orbs.splice(i,1);
-    } else {
-      o.x -= baseSpeed * speedFactor;
-    }
-  }
-
-  draw(dt, speedFactor);
-  if(running) requestAnimationFrame(loop);
-}
-
-/* ------------------ Utilities ------------------ */
-function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
-
-/* ------------------ Game Over ------------------ */
-function gameOver(){
-  document.getElementById("finalScore").textContent = "Score: " + Math.floor(score);
-  gameOverScreen.classList.remove("hidden");
-  canvas.style.display = "none";
-}
-
-/* ------------------ Init & Preload ------------------ */
-function init(){
-  renderScoreboard();
-  preloadBackgrounds(backgroundImages);
-  canvas.style.display = "none";
-}
-init();
+showHighScores();
