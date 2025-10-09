@@ -1,141 +1,75 @@
-/* Make everything take up the whole screen */
-html, body {
+body {
   margin: 0;
-  padding: 0;
   overflow: hidden;
-  height: 100%;
   font-family: "Trebuchet MS", sans-serif;
-  background: black;
+  background: #b3e0ff;
+  text-align: center;
 }
 
-/* Start Screen */
-#start-screen {
+/* Hidden sections */
+.hidden {
+  display: none;
+}
+
+/* Fade-in animation for Game Over */
+.fade {
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+
+.fade.show {
+  opacity: 1;
+}
+
+/* Screens */
+#start-screen,
+#game-over {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/25/Table_Mountain_from_Bloubergstrand.jpg");
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-}
-
-#start-screen h1 {
-  font-size: 3em;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 10px 20px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-#how-to-play {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 15px 25px;
-  border-radius: 10px;
-  text-align: center;
-  max-width: 600px;
-  margin-bottom: 20px;
-}
-
-#scoreboard {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 10px 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-#scoreboard h2 {
-  margin-bottom: 8px;
-}
-
-#score-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#score-list li {
-  font-size: 1.1em;
-  margin: 3px 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
 }
 
 /* Buttons */
 button {
-  background-color: #ff9800;
-  border: none;
+  background-color: #0077b6;
   color: white;
-  padding: 12px 30px;
-  font-size: 1.1em;
-  border-radius: 12px;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: 0.3s;
+  font-size: 16px;
+  margin: 5px;
 }
 
 button:hover {
-  background-color: #ffb74d;
-}
-
-/* Game canvas fills the screen */
-#gameCanvas {
-  display: none;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(#87ceeb, #cbe8ff);
-}
-
-/* Hidden class (for toggling menus) */
-.hidden {
-  display: none;
+  background-color: #005f8a;
 }
 
 /* Quiz popup */
 #quiz-popup {
   position: absolute;
-  top: 50%;
+  bottom: 20px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.85);
-  color: white;
-  padding: 20px 30px;
-  border-radius: 15px;
-  text-align: center;
-  max-width: 400px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
 
 #quiz-options button {
   display: block;
-  margin: 10px auto;
-  width: 80%;
-}
-
-/* Game Over screen */
-#game-over {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.5em;
+  margin: 5px 0;
 }
 
-#player-name {
-  margin-top: 10px;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  text-align: center;
-  font-size: 1em;
+/* Canvas covers the full screen */
+canvas {
+  display: block;
+  background: #cde6ff;
 }
