@@ -6,70 +6,46 @@ body {
   text-align: center;
 }
 
-/* Hidden sections */
-.hidden {
-  display: none;
-}
+/* visibility helpers */
+.hidden { display: none; }
+.visible { display: block; }
 
-/* Fade-in animation for Game Over */
-.fade {
-  opacity: 0;
-  transition: opacity 1.5s ease;
-}
+/* fade animation for Game Over */
+.fade { opacity: 0; transition: opacity 1.2s ease; }
+.fade.show { opacity: 1; }
 
-.fade.show {
-  opacity: 1;
-}
-
-/* Screens */
-#start-screen,
-#game-over {
+/* pop-up boxes */
+#start-screen, #game-over {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255,255,255,0.92);
   padding: 30px 40px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  border-radius: 14px;
+  box-shadow: 0 0 18px rgba(0,0,0,0.3);
 }
 
-/* Buttons */
+/* buttons */
 button {
-  background-color: #0077b6;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 16px;
-  margin: 5px;
+  background:#0077b6; color:white;
+  border:none; padding:12px 20px;
+  border-radius:10px; cursor:pointer;
+  font-size:16px; margin:6px;
 }
+button:hover { background:#005f8a; }
 
-button:hover {
-  background-color: #005f8a;
-}
-
-/* Quiz popup */
+/* quiz popup */
 #quiz-popup {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  position:absolute;
+  bottom:20px; left:50%; transform:translateX(-50%);
+  background:rgba(255,255,255,0.95);
+  padding:20px; border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
+#quiz-options button { display:block; width:100%; margin:5px 0; }
 
-#quiz-options button {
-  display: block;
-  width: 100%;
-  margin: 5px 0;
-}
-
-/* Canvas covers the full screen */
 canvas {
-  display: block;
-  background: #cde6ff;
+  width:100vw; height:100vh;
+  background:#cde6ff;
+  display:block;
 }
