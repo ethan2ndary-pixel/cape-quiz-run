@@ -1,32 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cape Mountains Runner</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cape Mountains Quiz Runner</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="start-screen" class="screen">
-    <h1>Cape Mountains Runner</h1>
-    <p class="subtitle">An educational game about the Cape Mountains</p>
-    <p class="how-to">
-      🏃‍♂️ <strong>How to Play:</strong><br>
-      Tap or press <b>Space</b> to jump.<br>
-      Collect glowing orbs 💡 to learn fun facts.<br>
-      Avoid rocks ⛰️ to keep running.<br>
-      See how far you can go!
-    </p>
-    <p class="credit">Created by Ethan</p>
-    <button id="start-button">Start Game</button>
+  <div id="startScreen" class="screen">
+    <div class="overlayCard">
+      <h1>Cape Mountains Quiz Runner</h1>
+      <p class="byline">Created by Ethan</p>
+      <div class="howto">
+        <p><strong>How to play</strong></p>
+        <ul>
+          <li>Tap / click the screen or press <strong>Space</strong> to jump.</li>
+          <li>Collect glowing orbs — some orbs trigger quiz questions. Answer to continue.</li>
+          <li>Avoid spikes — hitting a spike ends your run.</li>
+          <li>Correct answers give bonus points. Try to beat your high score!</li>
+        </ul>
+      </div>
+      <div class="controls">
+        <button id="startBtn" class="btn primary">Start Game</button>
+        <button id="editQuestionsBtn" class="btn">Edit Questions</button>
+      </div>
+    </div>
+    <div class="credit">Photo backgrounds: Wikimedia Commons (replace with preferred images if you like)</div>
   </div>
 
   <canvas id="gameCanvas"></canvas>
 
-  <div id="game-over" class="screen hidden">
-    <h2>Game Over!</h2>
-    <p id="fact-display"></p>
-    <button id="restart-button">Restart</button>
+  <!-- HUD and UI -->
+  <div id="ui">
+    <div id="scoreWrap">
+      <div id="score">Score: 0</div>
+      <div id="highScore">High: 0</div>
+    </div>
+    <div id="questionBox" class="hidden">
+      <div id="questionText"></div>
+      <div id="answers"></div>
+    </div>
+    <div id="toast" class="hidden"></div>
+  </div>
+
+  <div id="gameOver" class="screen hidden">
+    <div class="overlayCard">
+      <h2>Game Over</h2>
+      <p id="finalScore">Score: 0</p>
+      <div class="controls">
+        <button id="restartBtn" class="btn primary">Play Again</button>
+        <button id="menuBtn" class="btn">Back to Menu</button>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
