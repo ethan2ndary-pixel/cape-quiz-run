@@ -1,9 +1,10 @@
-/* Cape Mountains Quiz Runner — final version with first-name scoreboard saved permanently
+/* Cape Mountains Quiz Runner — low-gravity jump + gradual speed increase
    - Full-screen canvas
    - Photo parallax background (replace URLs below)
    - Spikes obstacles (triangles)
    - Quiz orbs (multiple choice, pause game)
-   - Top-5 scoreboard with first name + score saved in localStorage
+   - Top-5 scoreboard with first name saved in localStorage
+   - Low gravity jump and speedFactor that ramps up with distance
 */
 
 /* ------------------ BACKGROUNDS (replace if you wish) ------------------ */
@@ -56,6 +57,13 @@ let highScoreList = JSON.parse(localStorage.getItem("capeHighScores")||"[]"); //
 let bgLayers = [];
 let spawnTimer=0, orbTimer=0, nextQuestionAt=400 + Math.random()*200;
 
+/* ---------- GAME TUNING (low gravity + ramp) ---------- */
+let gravity = 0.9;        // lower gravity for floaty jumps (smaller => floatier)
+const jumpVy = -14;       // initial jump velocity (negative = up)
+const baseSpeed = 6;      // base movement multiplier (used to move obstacles/orbs)
+const speedRampFactor = 1/5000; // how fast speedFactor grows with distance
+const speedCap = 3.0;     // maximum speed multiplier cap
+
 /* ------------------ Scoreboard functions (persistent) ------------------ */
 function saveTopScore(name, sc){
   const entry = { name: (name || "Player").slice(0,24), score: Math.floor(sc) };
@@ -78,7 +86,6 @@ function renderScoreboard(){
     scoreboardEl.appendChild(row);
   });
 }
-// simple escape
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 renderScoreboard();
@@ -113,8 +120,8 @@ function start(){
   preloadBackgrounds(backgroundImages, ()=>{ resetGame(); requestAnimationFrame(loop); });
 }
 
-/* ------------------ Input ------------------ */
-function jump(){ if(!player.jumping){ player.vy = -18; player.jumping = true; } }
+/* ------------------ Input (jump uses low-gravity behavior) ------------------ */
+function jump(){ if(!player.jumping){ player.vy = jumpVy; player.jumping = true; } }
 window.addEventListener("keydown", e=>{ if(e.code==="Space"){ e.preventDefault(); if(!running) start(); else jump(); } });
 canvas.addEventListener("pointerdown", ()=>{ if(!running) start(); else jump(); });
 
@@ -171,10 +178,10 @@ function showQuestion(qobj, onAnswer){
 }
 
 /* ------------------ Visuals & Draw helpers ------------------ */
-function drawBackground(dt){
+function drawBackground(dt, speedFactor){
   bgLayers.forEach((b, idx)=>{
-    const speed = b.speed * (0.4 + idx*0.6);
-    b.x -= speed * (dt/16) * (1 + score/4000);
+    const speed = b.speed * (0.4 + idx*0.6) * speedFactor;
+    b.x -= speed * (dt/16);
     const img = b.img;
     if(!img || !img.complete){
       ctx.fillStyle = idx===0 ? "#dfeffd" : "#cbe6ff"; ctx.fillRect(0, idx*30, W, H*(0.7 - idx*0.05)); return;
@@ -188,7 +195,7 @@ function drawBackground(dt){
   });
 }
 
-function drawSpikes(){
+function drawSpikes(speedFactor){
   ctx.fillStyle = "#5a3d32";
   obstacles.forEach(s=>{
     const cols = 3;
@@ -211,11 +218,11 @@ function drawSpikes(){
       ctx.fill();
       ctx.fillStyle = "#5a3d32";
     }
-    s.x -= 6 * (1 + score/8000);
+    s.x -= baseSpeed * speedFactor;
   });
 }
 
-function drawOrbs(){
+function drawOrbs(speedFactor){
   orbs.forEach(o=>{
     const t = performance.now()/300;
     ctx.beginPath();
@@ -223,7 +230,7 @@ function drawOrbs(){
     ctx.fillStyle = "rgba(255,255,160,0.95)";
     ctx.arc(o.x, o.y + Math.sin(t)*4, o.r, 0, Math.PI*2); ctx.fill();
     ctx.shadowBlur = 0;
-    o.x -= 6 * (1 + score/8000);
+    o.x -= baseSpeed * speedFactor;
   });
 }
 
@@ -244,47 +251,64 @@ function drawHuman(x,y,w,h){
   ctx.restore();
 }
 
-function draw(dt){
+function draw(dt, speedFactor){
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = "#cfeeff"; ctx.fillRect(0,0,W,H);
-  drawBackground(dt);
+  drawBackground(dt, speedFactor);
   ctx.fillStyle = "#32492f"; ctx.fillRect(0, H*0.75, W, H*0.25);
-  drawSpikes();
-  drawOrbs();
+  drawSpikes(speedFactor);
+  drawOrbs(speedFactor);
   drawHuman(player.x, player.y, player.w, player.h);
   scoreEl.textContent = "Score: " + Math.floor(score);
   highScoreEl.textContent = "High: " + (highScoreList[0]? highScoreList[0].score:0);
 }
 
-/* ------------------ Loop ------------------ */
+/* ------------------ Loop (uses speedFactor based on distance) ------------------ */
 let lastSpawn = 0;
 function loop(t){
   if(!running) return;
   const dt = Math.max(16, t - lastTime); lastTime = t;
-  distance += (dt/1000) * 220 * (1 + score/4000);
-  score += 0.01 * (dt);
-  player.vy += 1.8 * (dt/16);
+
+  // compute speed factor increasing slowly with distance
+  const rawFactor = 1 + distance * speedRampFactor; // grows with distance
+  const speedFactor = Math.min(rawFactor, speedCap); // limit cap
+
+  // update distance & passive score (scaled by speedFactor lightly)
+  distance += (dt/1000) * 220 * (0.9 + speedFactor*0.35);
+  score += 0.01 * (dt) * speedFactor;
+
+  // low-gravity physics: smaller gravity applied so jump is floatier
+  player.vy += gravity * (dt/16);
   player.y += player.vy;
   if(player.y > H*0.75 - player.h){ player.y = H*0.75 - player.h; player.vy = 0; player.jumping=false; }
 
+  // spawns scaled by speedFactor to keep challenge pace
   lastSpawn += dt;
-  if(lastSpawn > 900 - Math.min(500, distance*0.01)){ spawnSpike(); lastSpawn = 0; }
+  if(lastSpawn > Math.max(500, 900 - Math.min(500, distance*0.01))){
+    spawnSpike(); lastSpawn = 0;
+  }
   orbTimer += dt;
-  if(orbTimer > 1600){
+  if(orbTimer > Math.max(900, 1600 - Math.min(800, distance*0.02))){
     const isQuestion = distance > nextQuestionAt && Math.random() < 0.45;
     spawnOrb(isQuestion);
     if(isQuestion) nextQuestionAt = distance + 800 + Math.random()*600;
     orbTimer = 0;
   }
 
+  // move spikes & collisions (collision logic same)
   for(let i=obstacles.length-1;i>=0;i--){
     const s = obstacles[i];
     if(s.x + s.w < -60){ obstacles.splice(i,1); continue; }
     if(player.x + player.w > s.x + 6 && player.x < s.x + s.w - 6 && player.y + player.h > s.y + s.h*0.15){
       running = false; gameOver(); return;
+    } else {
+      // movement already handled in drawSpikes by subtracting baseSpeed * speedFactor
+      // we still need to update position for non-drawing cases
+      s.x -= baseSpeed * speedFactor;
     }
   }
 
+  // orbs movement & collision
   for(let i=orbs.length-1;i>=0;i--){
     const o = orbs[i];
     if(o.x + o.r < -60){ orbs.splice(i,1); continue; }
@@ -298,10 +322,12 @@ function loop(t){
         score += 60; showToast("+60");
       }
       orbs.splice(i,1);
+    } else {
+      o.x -= baseSpeed * speedFactor;
     }
   }
 
-  draw(dt);
+  draw(dt, speedFactor);
   if(running) requestAnimationFrame(loop);
 }
 
