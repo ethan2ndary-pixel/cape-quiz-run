@@ -4,8 +4,6 @@ window.onload = () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  // UI elements
-  const loadingScreen = document.getElementById("loading-screen");
   const startScreen = document.getElementById("start-screen");
   const startButton = document.getElementById("start-button");
   const quizPopup = document.getElementById("quiz-popup");
@@ -18,20 +16,8 @@ window.onload = () => {
   const playerNameInput = document.getElementById("player-name");
   const scoreList = document.getElementById("score-list");
 
-  // Game variables
   let player, spikes, orbs, gravity, jumpPower, gameSpeed, score, quizActive, running;
   let highs = JSON.parse(localStorage.getItem("capeHighScores")) || [];
-
-  // Background
-  const bg = new Image();
-  bg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Table_Mountain_from_Bloubergstrand.jpg/1280px-Table_Mountain_from_Bloubergstrand.jpg";
-
-  // Preload image
-  bg.onload = () => {
-    loadingScreen.classList.add("hidden");
-    startScreen.classList.remove("hidden");
-    startScreen.classList.add("show");
-  };
 
   function createPlayer() {
     return { x:150, y:canvas.height-100, w:50, h:80, vy:0, jumping:false };
@@ -70,10 +56,45 @@ window.onload = () => {
     {q:"Which ocean borders the Cape Peninsula?",o:["Atlantic","Indian","Arctic","Pacific"],a:0},
   ];
 
+  function drawCartoonMountains() {
+    const groundHeight = canvas.height - 80;
+    ctx.fillStyle = "#87CEEB"; // sky
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // distant mountains
+    ctx.fillStyle = "#b3d1c6";
+    ctx.beginPath();
+    ctx.moveTo(0, groundHeight);
+    for(let x=0;x<=canvas.width;x+=200){
+      const y = groundHeight - 150 - Math.random()*100;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(canvas.width, groundHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    // nearer mountains
+    ctx.fillStyle = "#8fbf9f";
+    ctx.beginPath();
+    ctx.moveTo(0, groundHeight);
+    for(let x=0;x<=canvas.width;x+=150){
+      const y = groundHeight - 100 - Math.random()*80;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(canvas.width, groundHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    // ground
+    ctx.fillStyle = "#228B22";
+    ctx.fillRect(0, groundHeight, canvas.width, 100);
+  }
+
   function gameLoop() {
     if(!running) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(bg, -score*0.5 % canvas.width, 0, canvas.width*2, canvas.height);
+
+    drawCartoonMountains();
 
     player.y += player.vy;
     player.vy += gravity;
