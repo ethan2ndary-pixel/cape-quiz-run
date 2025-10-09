@@ -5,6 +5,7 @@ window.onload = () => {
   canvas.height = window.innerHeight;
 
   // UI elements
+  const loadingScreen = document.getElementById("loading-screen");
   const startScreen = document.getElementById("start-screen");
   const startButton = document.getElementById("start-button");
   const quizPopup = document.getElementById("quiz-popup");
@@ -21,12 +22,16 @@ window.onload = () => {
   let player, spikes, orbs, gravity, jumpPower, gameSpeed, score, quizActive, running;
   let highs = JSON.parse(localStorage.getItem("capeHighScores")) || [];
 
+  // Background
   const bg = new Image();
-  bg.src = "https://upload.wikimedia.org/wikipedia/commons/2/25/Table_Mountain_from_Bloubergstrand.jpg";
+  bg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Table_Mountain_from_Bloubergstrand.jpg/1280px-Table_Mountain_from_Bloubergstrand.jpg";
 
-  // Wait for background to load before allowing the game to start
-  let bgLoaded = false;
-  bg.onload = () => { bgLoaded = true; };
+  // Preload image
+  bg.onload = () => {
+    loadingScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+    startScreen.classList.add("show");
+  };
 
   function createPlayer() {
     return { x:150, y:canvas.height-100, w:50, h:80, vy:0, jumping:false };
@@ -34,7 +39,7 @@ window.onload = () => {
 
   function reset() {
     player=createPlayer(); spikes=[]; orbs=[];
-    gravity=0.4; jumpPower=-10; gameSpeed=6;
+    gravity=0.3; jumpPower=-9; gameSpeed=6;
     score=0; quizActive=false; running=true;
     gameLoop();
   }
@@ -60,26 +65,16 @@ window.onload = () => {
 
   const questions = [
     {q:"Which city is closest to Table Mountain?",o:["Cape Town","Johannesburg","Durban","Pretoria"],a:0},
-    {q:"What rock mainly makes up Table Mountain?",o:["Granite","Sandstone","Limestone","Basalt"],a:1},
-    {q:"The Cape Floristic Region is famous for its:",o:["Deserts","Rainforests","Fynbos","Savannas"],a:2},
+    {q:"What type of rock mainly forms Table Mountain?",o:["Granite","Sandstone","Limestone","Basalt"],a:1},
+    {q:"The Cape Floristic Region is known for its:",o:["Rainforests","Fynbos","Savannas","Deserts"],a:1},
+    {q:"Which ocean borders the Cape Peninsula?",o:["Atlantic","Indian","Arctic","Pacific"],a:0},
   ];
 
   function gameLoop() {
     if(!running) return;
-
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(bg, -score*0.5 % canvas.width, 0, canvas.width*2, canvas.height);
 
-    // Draw background (only if loaded)
-    if(bgLoaded) {
-      ctx.drawImage(bg, -score*0.5 % canvas.width, 0, canvas.width*2, canvas.height);
-    } else {
-      ctx.fillStyle = "#aee";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = "black";
-      ctx.fillText("Loading Cape Mountains...", canvas.width/2 - 100, canvas.height/2);
-    }
-
-    // Gravity and movement
     player.y += player.vy;
     player.vy += gravity;
     if(player.y > canvas.height - 100) {
@@ -88,11 +83,9 @@ window.onload = () => {
       player.jumping = false;
     }
 
-    // Draw player
     ctx.fillStyle = "#222";
     ctx.fillRect(player.x, player.y - player.h, player.w, player.h);
 
-    // Spikes
     if(Math.random() < 0.01) spike();
     spikes.forEach((s,i)=>{
       s.x -= gameSpeed;
@@ -107,7 +100,6 @@ window.onload = () => {
       if(player.x<s.x+s.w && player.x+player.w>s.x && player.y>s.y-s.h) end();
     });
 
-    // Orbs
     if(Math.random() < 0.005) orb();
     orbs.forEach((o,i)=>{
       o.x -= gameSpeed;
@@ -124,7 +116,7 @@ window.onload = () => {
     });
 
     score++;
-    if(score%500===0) gameSpeed += 0.5;
+    if(score%500===0) gameSpeed += 0.4;
 
     ctx.fillStyle="black";
     ctx.font="24px Trebuchet MS";
@@ -156,7 +148,6 @@ window.onload = () => {
     running = false;
     canvas.classList.add("hidden");
     gameOverScreen.classList.remove("hidden");
-    gameOverScreen.classList.add("show");
     finalScore.textContent = `Your Score: ${score}`;
   }
 
@@ -170,10 +161,6 @@ window.onload = () => {
   };
 
   startButton.onclick = () => {
-    if(!bgLoaded){
-      startButton.innerText = "Loading...";
-      return;
-    }
     startScreen.classList.add("hidden");
     canvas.classList.remove("hidden");
     reset();
