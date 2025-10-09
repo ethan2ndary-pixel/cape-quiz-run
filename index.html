@@ -7,44 +7,32 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Start Screen -->
+  <!-- 🟩 Start Screen -->
   <div id="start-screen">
     <h1>Cape Mountains Runner</h1>
-
-    <div id="how-to-play">
-      <p>🏃‍♂️ Press SPACE or tap to jump over spikes.</p>
-      <p>✨ Collect orbs to answer quiz questions about the Cape Mountains!</p>
-      <p>🎯 Try to beat your high score!</p>
-    </div>
-
-    <!-- Scoreboard -->
-    <div id="scoreboard">
-      <h2>Top Explorers</h2>
-      <ol id="score-list"></ol>
-    </div>
-
+    <p>Jump, collect orbs, and answer quiz questions to learn about the Cape Mountains!</p>
     <button id="start-button">Start Game</button>
-    <p>Created by Ethan</p>
+    <h3>High Scores:</h3>
+    <ul id="score-list"></ul>
   </div>
 
-  <!-- Game Canvas -->
-  <canvas id="gameCanvas"></canvas>
-
-  <!-- Quiz Popup -->
+  <!-- 🟨 Quiz Popup -->
   <div id="quiz-popup" class="hidden">
-    <h2 id="quiz-question">Question</h2>
+    <div id="quiz-question"></div>
     <div id="quiz-options"></div>
   </div>
 
-  <!-- Game Over -->
-  <div id="game-over" class="hidden">
-    <h2>Game Over</h2>
-    <p id="final-score">Your Score: 0</p>
-    <label for="player-name">Enter your name:</label>
-    <input type="text" id="player-name" maxlength="12" placeholder="Your name">
+  <!-- 🟥 Game Over Screen -->
+  <div id="game-over" class="hidden fade">
+    <h2>Game Over!</h2>
+    <p id="final-score"></p>
+    <input type="text" id="player-name" placeholder="Enter your name" />
     <button id="save-score">Save Score</button>
     <button id="restart">Restart</button>
   </div>
+
+  <!-- 🎮 Game Canvas -->
+  <canvas id="gameCanvas" style="display:none;"></canvas>
 
   <script src="script.js"></script>
 </body>
