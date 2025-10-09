@@ -7,47 +7,67 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- START SCREEN -->
   <div id="startScreen" class="screen">
     <div class="overlayCard">
       <h1>Cape Mountains Quiz Runner</h1>
       <p class="byline">Created by Ethan</p>
+
       <div class="howto">
         <p><strong>How to play</strong></p>
         <ul>
           <li>Tap / click the screen or press <strong>Space</strong> to jump.</li>
-          <li>Collect glowing orbs — some orbs trigger quiz questions. Answer to continue.</li>
+          <li>Collect glowing orbs — some trigger quiz questions. Answer to continue.</li>
           <li>Avoid spikes — hitting a spike ends your run.</li>
           <li>Correct answers give bonus points. Try to beat your high score!</li>
         </ul>
       </div>
+
       <div class="controls">
         <button id="startBtn" class="btn primary">Start Game</button>
         <button id="editQuestionsBtn" class="btn">Edit Questions</button>
       </div>
+
+      <h3 style="margin-top:16px">Top Scores</h3>
+      <div id="scoreboard" class="scoreboard">
+        <!-- Top 5 will be injected here -->
+      </div>
+
+      <p class="small">Photo backgrounds from Wikimedia Commons — replace URLs in <code>script.js</code> if desired.</p>
     </div>
-    <div class="credit">Photo backgrounds: Wikimedia Commons (replace with preferred images if you like)</div>
   </div>
 
+  <!-- GAME CANVAS (full-screen) -->
   <canvas id="gameCanvas"></canvas>
 
-  <!-- HUD and UI -->
+  <!-- HUD & UI (question box + toast) -->
   <div id="ui">
     <div id="scoreWrap">
       <div id="score">Score: 0</div>
       <div id="highScore">High: 0</div>
     </div>
-    <div id="questionBox" class="hidden">
+
+    <div id="questionBox" class="hidden" role="dialog" aria-modal="true">
       <div id="questionText"></div>
       <div id="answers"></div>
     </div>
+
     <div id="toast" class="hidden"></div>
   </div>
 
+  <!-- GAME OVER (save first name) -->
   <div id="gameOver" class="screen hidden">
     <div class="overlayCard">
       <h2>Game Over</h2>
       <p id="finalScore">Score: 0</p>
-      <div class="controls">
+
+      <div id="saveRow" style="margin-top:12px">
+        <label for="playerName">Enter your first name: </label>
+        <input id="playerName" maxlength="24" placeholder="e.g. Ethan" style="width:160px;padding:6px;border-radius:6px;border:1px solid #ccc" />
+        <button id="saveScoreBtn" class="btn primary" disabled>Save</button>
+      </div>
+
+      <div class="controls" style="margin-top:16px">
         <button id="restartBtn" class="btn primary">Play Again</button>
         <button id="menuBtn" class="btn">Back to Menu</button>
       </div>
