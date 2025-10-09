@@ -10,7 +10,7 @@ const restartButton = document.getElementById("restart-button");
 const factDisplay = document.getElementById("fact-display");
 
 let player, obstacles, orbs, backgroundMountains;
-let gameSpeed, gravity, score, gameActive;
+let gameSpeed, gravity, score, highScore, gameActive, newHigh;
 
 const facts = [
   "The Cape Mountains are home to over 9,000 plant species!",
@@ -20,8 +20,18 @@ const facts = [
   "Conservation in the Cape is key to protecting biodiversity.",
 ];
 
+highScore = parseInt(localStorage.getItem("capeHighScore")) || 0;
+
 function resetGame() {
-  player = { x: 150, y: canvas.height - 120, w: 60, h: 60, dy: 0, jumping: false };
+  player = {
+    x: 150,
+    y: canvas.height - 120,
+    w: 60,
+    h: 60,
+    dy: 0,
+    jumping: false,
+    color: "#ffb347",
+  };
   gravity = 1.2;
   obstacles = [];
   orbs = [];
@@ -29,14 +39,24 @@ function resetGame() {
   score = 0;
   gameSpeed = 6;
   gameActive = true;
+  newHigh = false;
 
   for (let i = 0; i < 3; i++) {
     backgroundMountains.push({
       x: i * canvas.width,
-      color: `hsl(${200 + i * 10}, 50%, 60%)`,
-      height: canvas.height / (3 + i),
+      color: `hsl(${200 + i * 15}, 50%, ${60 + i * 10}%)`,
+      height: canvas.height / (3 + i * 0.6),
+      speed: 2 + i,
     });
   }
+}
+
+function drawGradientSky() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#b3e5fc");
+  gradient.addColorStop(1, "#e1f5fe");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawMountains() {
@@ -49,20 +69,27 @@ function drawMountains() {
     ctx.closePath();
     ctx.fill();
 
-    m.x -= gameSpeed / (2 + Math.random());
+    m.x -= m.speed;
     if (m.x + canvas.width < 0) m.x = canvas.width;
   });
 }
 
 function drawPlayer() {
-  ctx.fillStyle = "#ff9e00";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.fillStyle = player.color;
+  ctx.shadowColor = "rgba(0,0,0,0.3)";
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.roundRect(player.x, player.y, player.w, player.h, 15);
+  ctx.fill();
+  ctx.shadowBlur = 0;
 }
 
 function drawObstacles() {
-  ctx.fillStyle = "#555";
+  ctx.fillStyle = "#6d4c41";
   obstacles.forEach((o) => {
-    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.beginPath();
+    ctx.roundRect(o.x, o.y, o.w, o.h, 8);
+    ctx.fill();
     o.x -= gameSpeed;
   });
   obstacles = obstacles.filter((o) => o.x + o.w > 0);
@@ -70,20 +97,23 @@ function drawObstacles() {
     obstacles.push({
       x: canvas.width,
       y: canvas.height - 80,
-      w: 50,
-      h: 50,
+      w: 60,
+      h: 60,
     });
   }
 }
 
 function drawOrbs() {
-  ctx.fillStyle = "rgba(255,255,100,0.8)";
+  ctx.shadowColor = "rgba(255, 255, 100, 0.6)";
+  ctx.shadowBlur = 15;
   orbs.forEach((orb) => {
     ctx.beginPath();
+    ctx.fillStyle = "rgba(255, 255, 120, 0.9)";
     ctx.arc(orb.x, orb.y, 15, 0, Math.PI * 2);
     ctx.fill();
     orb.x -= gameSpeed;
   });
+  ctx.shadowBlur = 0;
   orbs = orbs.filter((orb) => orb.x + 15 > 0);
 
   if (Math.random() < 0.01) {
@@ -127,10 +157,20 @@ function drawScore() {
   ctx.fillStyle = "#000";
   ctx.font = "24px Trebuchet MS";
   ctx.fillText(`Score: ${score}`, 20, 40);
+  ctx.fillText(`High Score: ${highScore}`, 20, 70);
+  if (newHigh) {
+    ctx.fillStyle = "#ff5722";
+    ctx.fillText("New High Score!", 20, 100);
+  }
 }
 
 function endGame() {
   gameActive = false;
+  if (score > highScore) {
+    highScore = score;
+    newHigh = true;
+    localStorage.setItem("capeHighScore", highScore);
+  }
   canvas.style.display = "none";
   gameOverScreen.classList.remove("hidden");
 }
@@ -138,8 +178,7 @@ function endGame() {
 function update() {
   if (!gameActive) return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  drawGradientSky();
   drawMountains();
   drawObstacles();
   drawOrbs();
