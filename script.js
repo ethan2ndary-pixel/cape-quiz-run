@@ -20,11 +20,11 @@ const scoreList = document.getElementById("score-list");
 // === Game Variables ===
 let player, spikes, orbs, gravity, jumpPower, gameSpeed, score, quizActive, gameRunning;
 
-// === Load Background Image ===
+// === Background Image ===
 const backgroundImg = new Image();
 backgroundImg.src = "https://upload.wikimedia.org/wikipedia/commons/2/25/Table_Mountain_from_Bloubergstrand.jpg";
 
-// === Setup Local High Scores ===
+// === Local High Scores ===
 let highScores = JSON.parse(localStorage.getItem("capeHighScores")) || [];
 
 // === Player Object ===
@@ -45,7 +45,7 @@ function resetGame() {
   player = createPlayer();
   spikes = [];
   orbs = [];
-  gravity = 0.4;        // LOW GRAVITY feel 🌙
+  gravity = 0.4; // low-gravity feel
   jumpPower = -10;
   gameSpeed = 6;
   score = 0;
@@ -56,15 +56,13 @@ function resetGame() {
 
 // === Controls ===
 window.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && !quizActive && gameRunning) {
-    jump();
-  }
+  if (e.code === "Space" && !quizActive && gameRunning) jump();
 });
 window.addEventListener("touchstart", () => {
   if (!quizActive && gameRunning) jump();
 });
 
-// === Jump Function ===
+// === Jump ===
 function jump() {
   if (!player.jumping) {
     player.vy = jumpPower;
@@ -72,7 +70,7 @@ function jump() {
   }
 }
 
-// === Spikes + Orbs ===
+// === Obstacles & Collectibles ===
 function spawnSpike() {
   spikes.push({
     x: canvas.width,
@@ -92,7 +90,7 @@ function spawnOrb() {
   });
 }
 
-// === Quiz Questions (you can edit these!) ===
+// === Questions ===
 const questions = [
   {
     q: "Which city is closest to Table Mountain?",
@@ -116,28 +114,24 @@ function gameLoop() {
   if (!gameRunning) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(backgroundImg, -score * 0.5, 0, canvas.width * 2, canvas.height); // Scrolling bg
+  ctx.drawImage(backgroundImg, -score * 0.5, 0, canvas.width * 2, canvas.height);
 
   // Gravity
   player.y += player.vy;
   player.vy += gravity;
 
-  // Ground collision
   if (player.y > canvas.height - 100) {
     player.y = canvas.height - 100;
     player.vy = 0;
     player.jumping = false;
   }
 
-  // Draw player
+  // Player
   ctx.fillStyle = player.color;
   ctx.fillRect(player.x, player.y - player.height, player.width, player.height);
 
-  // Spawn spikes/orbs randomly
+  // Spikes
   if (Math.random() < 0.01) spawnSpike();
-  if (Math.random() < 0.005) spawnOrb();
-
-  // Move + draw spikes
   spikes.forEach((spike, i) => {
     spike.x -= gameSpeed;
     ctx.beginPath();
@@ -147,10 +141,8 @@ function gameLoop() {
     ctx.closePath();
     ctx.fillStyle = spike.color;
     ctx.fill();
-
     if (spike.x + spike.width < 0) spikes.splice(i, 1);
 
-    // Collision check
     if (
       player.x < spike.x + spike.width &&
       player.x + player.width > spike.x &&
@@ -160,7 +152,8 @@ function gameLoop() {
     }
   });
 
-  // Move + draw orbs
+  // Orbs
+  if (Math.random() < 0.005) spawnOrb();
   orbs.forEach((orb, i) => {
     orb.x -= gameSpeed;
     ctx.beginPath();
@@ -169,7 +162,6 @@ function gameLoop() {
     ctx.fill();
     if (orb.x + orb.radius < 0) orbs.splice(i, 1);
 
-    // Collision with orb
     if (
       player.x < orb.x + orb.radius &&
       player.x + player.width > orb.x - orb.radius &&
@@ -181,9 +173,9 @@ function gameLoop() {
     }
   });
 
-  // Score and speed
+  // Score
   score += 1;
-  if (score % 500 === 0) gameSpeed += 0.5; // slowly increase speed
+  if (score % 500 === 0) gameSpeed += 0.5;
 
   ctx.fillStyle = "black";
   ctx.font = "24px Trebuchet MS";
@@ -212,11 +204,12 @@ function showQuestion() {
   quizPopup.classList.remove("hidden");
 }
 
-// === Game Over ===
+// === End Game ===
 function endGame() {
   gameRunning = false;
   canvas.style.display = "none";
   gameOverScreen.classList.remove("hidden");
+  gameOverScreen.classList.add("show");
   finalScore.textContent = `Your Score: ${score}`;
 }
 
@@ -230,7 +223,7 @@ saveScoreButton.onclick = () => {
   location.reload();
 };
 
-// === Start & Restart Buttons ===
+// === Start & Restart ===
 startButton.onclick = () => {
   startScreen.style.display = "none";
   canvas.style.display = "block";
@@ -243,7 +236,7 @@ restartButton.onclick = () => {
   resetGame();
 };
 
-// === Show Saved Scores on Start ===
+// === Show Saved Scores ===
 function showHighScores() {
   scoreList.innerHTML = "";
   highScores.forEach((s) => {
