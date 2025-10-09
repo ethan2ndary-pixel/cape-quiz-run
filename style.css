@@ -6,10 +6,10 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:#bfe9ff}
 canvas#gameCanvas{display:block;width:100vw;height:100vh}
-.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10}
 .overlayCard{
   background:var(--panel);padding:18px;border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,0.18);
-  width:min(880px,94vw);max-width:94vw;text-align:left;
+  width:min(920px,94vw);max-width:94vw;text-align:left;
 }
 .overlayCard h1{margin:0 0 6px;font-size:28px;color:var(--text)}
 .byline{color:#333;margin-bottom:8px}
@@ -17,14 +17,14 @@ canvas#gameCanvas{display:block;width:100vw;height:100vh}
 .controls{display:flex;gap:10px;margin-top:12px}
 .btn{appearance:none;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;background:#eee}
 .btn.primary{background:var(--accent);color:white}
-.credit{position:fixed;bottom:12px;left:12px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,0.6)}
+.small{font-size:12px;color:#444;margin-top:10px}
 .hidden{display:none}
 
 /* UI */
 #ui{position:fixed;left:12px;top:12px;z-index:40;pointer-events:none}
 #scoreWrap{background:rgba(255,255,255,0.95);padding:8px 12px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.12);display:flex;gap:12px;align-items:center}
 #score,#highScore{font-weight:700;color:#111;pointer-events:auto}
-#questionBox{position:fixed;left:50%;top:22%;transform:translateX(-50%);background:rgba(255,255,255,0.97);padding:16px;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,0.25);z-index:60;max-width:760px;pointer-events:auto}
+#questionBox{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:rgba(255,255,255,0.97);padding:16px;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,0.25);z-index:60;max-width:760px;pointer-events:auto}
 #questionText{font-weight:700;margin-bottom:10px}
 #answers{display:flex;flex-direction:column;gap:8px}
 .answerBtn{padding:10px;border-radius:8px;border:0;background:#f6f6f6;cursor:pointer;text-align:left;font-size:16px}
@@ -35,16 +35,20 @@ canvas#gameCanvas{display:block;width:100vw;height:100vh}
 /* Game Over */
 #gameOver .overlayCard{text-align:center}
 
+/* scoreboard */
+.scoreboard{background:rgba(255,255,255,0.96);padding:8px;border-radius:8px;margin-top:8px;max-height:200px;overflow:auto}
+.scoreboard .row{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.05)}
+.scoreboard .row:last-child{border-bottom:0}
+
+/* Start screen background default images (can be changed in script.js) */
+#startScreen { background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/25/Table_mountain_and_the_ocean_cape_town.JPG"); background-size:cover; background-position:center; color:white; text-shadow:2px 2px 6px rgba(0,0,0,0.7); }
+#startScreen .overlayCard { background: rgba(0,0,0,0.46); color: #fff; }
+#startScreen .btn { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.12); }
+#startScreen .btn.primary { background: #ff9800; color: #fff; border: none; }
+
 /* small screens */
 @media (max-width:600px){
   .overlayCard{padding:14px}
   #questionBox{left:6%;transform:none;right:6%}
+  #startScreen .overlayCard{width:94vw}
 }
-
-/* Start screen background default images (you can change these by editing script.js backgroundImages array) */
-#startScreen { background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/25/Table_mountain_and_the_ocean_cape_town.JPG"); background-size:cover; background-position:center; color:white; text-shadow:2px 2px 6px rgba(0,0,0,0.7); }
-
-/* Buttons on start overlay */
-#startScreen .overlayCard { background: rgba(0,0,0,0.45); color: #fff; }
-#startScreen .btn { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.12); }
-#startScreen .btn.primary { background: #ff9800; color: #fff; border: none; }
