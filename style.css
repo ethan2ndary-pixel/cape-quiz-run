@@ -6,15 +6,12 @@ body {
   text-align: center;
 }
 
-/* visibility helpers */
 .hidden { display: none; }
 .visible { display: block; }
 
-/* fade animation for Game Over */
 .fade { opacity: 0; transition: opacity 1.2s ease; }
 .fade.show { opacity: 1; }
 
-/* pop-up boxes */
 #start-screen, #game-over {
   position: absolute;
   top: 50%; left: 50%;
@@ -25,7 +22,6 @@ body {
   box-shadow: 0 0 18px rgba(0,0,0,0.3);
 }
 
-/* buttons */
 button {
   background:#0077b6; color:white;
   border:none; padding:12px 20px;
@@ -34,7 +30,6 @@ button {
 }
 button:hover { background:#005f8a; }
 
-/* quiz popup */
 #quiz-popup {
   position:absolute;
   bottom:20px; left:50%; transform:translateX(-50%);
