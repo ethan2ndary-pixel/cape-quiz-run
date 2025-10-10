@@ -10,8 +10,7 @@ body {
 .visible { display: block; }
 
 .fade { transition: opacity 1s ease; }
-.fade.show { opacity: 1; }
-.fade.hide { opacity: 0; }
+.fade.hide { opacity: 0; pointer-events: none; }
 
 #start-screen, #game-over, #quiz-popup {
   position: absolute;
