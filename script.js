@@ -17,7 +17,17 @@ window.onload = () => {
   const scoreList = document.getElementById("score-list");
 
   let player, spikes, orbs, gravity, jumpPower, gameSpeed, score, quizActive, running;
+  let questionIndex = 0;
   let highs = JSON.parse(localStorage.getItem("capeHighScores")) || [];
+
+  const questions = [
+    {q:"Which city is closest to Table Mountain?",o:["Cape Town","Johannesburg","Durban","Pretoria"],a:0},
+    {q:"What type of rock mainly forms Table Mountain?",o:["Granite","Sandstone","Limestone","Basalt"],a:1},
+    {q:"The Cape Floristic Region is famous for its:",o:["Rainforests","Fynbos","Savannas","Deserts"],a:1},
+    {q:"Which ocean borders the Cape Peninsula?",o:["Atlantic","Indian","Arctic","Pacific"],a:0},
+    {q:"What mountain range extends from the Cape to the Eastern Cape?",o:["Drakensberg","Cederberg","Hottentots-Holland","Outeniqua"],a:3},
+    {q:"What is the flat top of Table Mountain called?",o:["Plateau","Mesa","Summit","Peak"],a:1}
+  ];
 
   function createPlayer() {
     return { x:150, y:canvas.height-100, w:50, h:80, vy:0, jumping:false };
@@ -27,6 +37,7 @@ window.onload = () => {
     player=createPlayer(); spikes=[]; orbs=[];
     gravity=0.3; jumpPower=-9; gameSpeed=6;
     score=0; quizActive=false; running=true;
+    questionIndex = 0;
     gameLoop();
   }
 
@@ -49,32 +60,12 @@ window.onload = () => {
     orbs.push({x:canvas.width,y:canvas.height-120,r:20});
   }
 
-  const questions = [
-    {q:"Which city is closest to Table Mountain?",o:["Cape Town","Johannesburg","Durban","Pretoria"],a:0},
-    {q:"What type of rock mainly forms Table Mountain?",o:["Granite","Sandstone","Limestone","Basalt"],a:1},
-    {q:"The Cape Floristic Region is known for its:",o:["Rainforests","Fynbos","Savannas","Deserts"],a:1},
-    {q:"Which ocean borders the Cape Peninsula?",o:["Atlantic","Indian","Arctic","Pacific"],a:0},
-  ];
-
   function drawCartoonMountains() {
     const groundHeight = canvas.height - 80;
     ctx.fillStyle = "#87CEEB"; // sky
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // distant mountains
-    ctx.fillStyle = "#b3d1c6";
-    ctx.beginPath();
-    ctx.moveTo(0, groundHeight);
-    for(let x=0;x<=canvas.width;x+=200){
-      const y = groundHeight - 150 - Math.random()*100;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(canvas.width, groundHeight);
-    ctx.closePath();
-    ctx.fill();
-
-    // nearer mountains
-    ctx.fillStyle = "#8fbf9f";
+    ctx.fillStyle = "#9cd3b0";
     ctx.beginPath();
     ctx.moveTo(0, groundHeight);
     for(let x=0;x<=canvas.width;x+=150){
@@ -85,7 +76,6 @@ window.onload = () => {
     ctx.closePath();
     ctx.fill();
 
-    // ground
     ctx.fillStyle = "#228B22";
     ctx.fillRect(0, groundHeight, canvas.width, 100);
   }
@@ -148,7 +138,8 @@ window.onload = () => {
 
   function quiz() {
     quizActive = true;
-    const q = questions[Math.floor(Math.random()*questions.length)];
+    if(questionIndex >= questions.length) questionIndex = 0;
+    const q = questions[questionIndex++];
     quizQuestion.textContent = q.q;
     quizOptions.innerHTML = "";
     q.o.forEach((opt,i)=>{
@@ -182,9 +173,13 @@ window.onload = () => {
   };
 
   startButton.onclick = () => {
-    startScreen.classList.add("hidden");
-    canvas.classList.remove("hidden");
-    reset();
+    startScreen.classList.add("fade");
+    startScreen.classList.add("hide");
+    setTimeout(()=>{
+      startScreen.classList.add("hidden");
+      canvas.classList.remove("hidden");
+      reset();
+    }, 800);
   };
 
   restartButton.onclick = () => {
