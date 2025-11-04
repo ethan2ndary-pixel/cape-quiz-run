@@ -1,43 +1,16 @@
-body { 
-  margin: 0; 
-  font-family: Arial, sans-serif; 
+body { margin:0; font-family:Arial,sans-serif; }
+canvas { display:block; margin:0 auto; background:#87ceeb; }
+
+#startScreen,#quizOverlay,#wrongOverlay,#gameOverScreen {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.7); color:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:20px; z-index:10;
 }
 
-canvas { 
-  background: url('cartoon-background.png') no-repeat center center; 
-  background-size: cover; 
-  display: block; 
-  margin: 0 auto; 
-}
+#quizOverlay, #wrongOverlay, #gameOverScreen { display:none; }
 
-#startScreen, #quizOverlay, #wrongOverlay, #gameOverScreen { 
-  position: absolute; 
-  top: 0; left: 0; 
-  width: 100%; height: 100%; 
-  background: rgba(0,0,0,0.7); 
-  color: #fff; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 20px; 
-  z-index: 10; 
-}
+.choice { margin:10px; padding:10px 20px; background:#222; cursor:pointer; border-radius:6px; }
+.choice:hover { background:#555; }
 
-.choice { 
-  margin: 10px; 
-  padding: 10px 20px; 
-  background: #222; 
-  cursor: pointer; 
-  border-radius: 5px; 
-}
-
-.choice:hover { 
-  background: #555; 
-}
-
-button { 
-  padding: 10px 20px; 
-  font-size: 18px; 
-  margin-top: 20px; 
-}
+button { padding:10px 20px; font-size:18px; margin-top:12px; cursor:pointer; }
+.highScoresList { margin-top:10px; text-align:center; }
