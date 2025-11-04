@@ -16,8 +16,8 @@ const continueBtn = document.getElementById('continueBtn');
 
 let player, obstacles, obstacleSpeed, points, questionIndex, gamePaused, gameStarted;
 
-// Questions
-let questions = [
+// Quiz questions
+const questions = [
   {
     question: "What is an NC cape?",
     answer: "A cape is a piece of land that extends into a body of water",
@@ -70,11 +70,11 @@ let questions = [
   }
 ];
 
-// Helper to shuffle choices
+// Shuffle multiple-choice answers
 function shuffleChoices(q) {
-  let choices = [...q.choices];
+  const choices = [...q.choices];
   for (let i = choices.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1));
     [choices[i], choices[j]] = [choices[j], choices[i]];
   }
   return choices;
@@ -91,13 +91,25 @@ function initGame() {
   gameStarted = true;
 }
 
-// Quiz logic
+// Start button
+startBtn.addEventListener('click', () => {
+  startScreen.style.display = 'none';
+  initGame();
+});
+
+// Restart button
+restartBtn.addEventListener('click', () => {
+  gameOverScreen.style.display = 'none';
+  initGame();
+});
+
+// Show quiz question
 function showQuestion() {
   gamePaused = true;
   quizOverlay.style.display = 'flex';
-  let q = questions[questionIndex];
+  const q = questions[questionIndex];
   questionText.innerText = q.question;
-  let shuffled = shuffleChoices(q);
+  const shuffled = shuffleChoices(q);
   choicesContainer.innerHTML = '';
   shuffled.forEach(choice => {
     const div = document.createElement('div');
@@ -108,6 +120,7 @@ function showQuestion() {
   });
 }
 
+// Check quiz answer
 function checkAnswer(selected, correct) {
   quizOverlay.style.display = 'none';
   if (selected === correct) {
@@ -125,35 +138,37 @@ continueBtn.onclick = () => {
   wrongOverlay.style.display = 'none';
   gamePaused = false;
   questionIndex = (questionIndex + 1) % questions.length;
-}
+};
 
-// Obstacle generation with improved ramps
+// Add obstacles (spikes + improved ramps)
 function addObstacle() {
-  let type = Math.random() < 0.5 ? 'spike' : 'ramp';
+  const type = Math.random() < 0.5 ? 'spike' : 'ramp';
   if (type === 'spike') {
-    let height = Math.random() * 50 + 20;
+    const height = Math.random() * 50 + 20;
     obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height, type: 'spike' });
   } else {
-    let width = Math.random() * 60 + 40;  // variable ramp width
-    let height = Math.random() * 50 + 20; // variable ramp height
-    let color = height > 50 ? 'darkgreen' : 'green'; // steeper ramps darker
+    const width = Math.random() * 60 + 40; // 40-100 px
+    const height = Math.random() * 50 + 20; // 20-70 px
+    const color = height > 50 ? 'darkgreen' : 'green';
     obstacles.push({ x: canvas.width, y: canvas.height - height, width, height, type: 'ramp', color });
   }
 }
 
-// Update loop
+// Update game state
 function update() {
   if (!gamePaused && gameStarted) {
     player.vy += 0.5;
     player.y += player.vy;
-    if (player.y + player.height > canvas.height) { player.y = canvas.height - player.height; player.vy = 0; }
+    if (player.y + player.height > canvas.height) {
+      player.y = canvas.height - player.height;
+      player.vy = 0;
+    }
 
     obstacles.forEach(o => o.x -= obstacleSpeed);
     obstacles = obstacles.filter(o => o.x + o.width > 0);
 
     if (Math.random() < 0.02 + points / 50000) addObstacle();
 
-    // Collision detection
     obstacles.forEach(o => {
       if (o.type === 'spike') {
         if (player.x < o.x + o.width && player.x + player.width > o.x &&
@@ -161,13 +176,11 @@ function update() {
           showQuestion();
         }
       } else if (o.type === 'ramp') {
-        let rampTopY = o.y;
-        let rampLeftX = o.x;
-        let rampRightX = o.x + o.width;
-
+        const rampTopY = o.y;
+        const rampLeftX = o.x;
+        const rampRightX = o.x + o.width;
         if (player.x + player.width > rampLeftX && player.x < rampRightX) {
           if (player.y + player.height > rampTopY) {
-            // Land on top
             player.y = rampTopY - player.height;
             player.vy = 0;
           }
@@ -175,14 +188,13 @@ function update() {
       }
     });
 
-    if (points < -2000) triggerGameOver(); // optional game-over condition
+    if (points < -2000) triggerGameOver();
   }
 }
 
-// Draw loop
+// Draw game
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   if (!gameStarted) return;
 
   ctx.fillStyle = 'red';
@@ -221,6 +233,7 @@ function loop() {
   draw();
   requestAnimationFrame(loop);
 }
+loop();
 
 // Controls
 window.addEventListener('keydown', e => {
@@ -228,16 +241,3 @@ window.addEventListener('keydown', e => {
     player.vy = -10;
   }
 });
-
-// Start & restart buttons
-startBtn.onclick = () => {
-  startScreen.style.display = 'none';
-  initGame();
-};
-
-restartBtn.onclick = () => {
-  gameOverScreen.style.display = 'none';
-  initGame();
-};
-
-loop();
