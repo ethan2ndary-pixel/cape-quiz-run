@@ -2,41 +2,43 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cape Escape</title>
+<title>Cape Escape — Created by Ethan</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-<!-- Start screen -->
+<!-- Start Screen -->
 <div id="startScreen">
   <h1>Cape Escape</h1>
+  <p>Created by Ethan</p>
   <button id="startBtn">Play</button>
-  <p>High Score: <span id="highScoreStart">0</span></p>
+  <p>Top 5 High Scores:</p>
+  <div id="highScoreStartList" class="highScoresList"></div>
 </div>
 
-<!-- Quiz overlay -->
-<div id="quizOverlay" style="display:none;">
+<!-- Quiz Overlay -->
+<div id="quizOverlay">
   <div id="questionText"></div>
   <div id="choicesContainer"></div>
 </div>
 
-<!-- Wrong answer overlay -->
-<div id="wrongOverlay" style="display:none;">
+<!-- Wrong Answer Overlay -->
+<div id="wrongOverlay">
   <div id="wrongText"></div>
   <button id="continueBtn">Continue</button>
 </div>
 
-<!-- Game over screen -->
-<div id="gameOverScreen" style="display:none;">
+<!-- Game Over Screen -->
+<div id="gameOverScreen">
   <h1>Game Over</h1>
   <p id="finalPoints"></p>
-  <p>High Score: <span id="highScoreGameOver">0</span></p>
+  <p>Top 5 High Scores:</p>
+  <div id="highScoreGameOverList" class="highScoresList"></div>
   <button id="restartBtn">Restart</button>
 </div>
 
-<!-- Load game.js AFTER DOM -->
 <script src="game.js"></script>
 </body>
 </html>
