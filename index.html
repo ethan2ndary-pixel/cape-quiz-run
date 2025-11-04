@@ -9,10 +9,11 @@
 
 <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-<!-- Start screen -->
+<!-- Start screen (old style) -->
 <div id="startScreen">
   <h1>Cape Escape</h1>
   <button id="startBtn">Play</button>
+  <p>High Score: <span id="highScoreStart">0</span></p>
 </div>
 
 <!-- Quiz overlay -->
@@ -31,6 +32,7 @@
 <div id="gameOverScreen" style="display:none;">
   <h1>Game Over</h1>
   <p id="finalPoints"></p>
+  <p>High Score: <span id="highScoreGameOver">0</span></p>
   <button id="restartBtn">Restart</button>
 </div>
 
