@@ -1,200 +1,243 @@
-window.onload = () => {
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-  const startScreen = document.getElementById("start-screen");
-  const startButton = document.getElementById("start-button");
-  const quizPopup = document.getElementById("quiz-popup");
-  const quizQuestion = document.getElementById("quiz-question");
-  const quizOptions = document.getElementById("quiz-options");
-  const gameOverScreen = document.getElementById("game-over");
-  const finalScore = document.getElementById("final-score");
-  const saveScoreButton = document.getElementById("save-score");
-  const restartButton = document.getElementById("restart");
-  const playerNameInput = document.getElementById("player-name");
-  const scoreList = document.getElementById("score-list");
+// Screens
+const startScreen = document.getElementById('startScreen');
+const startBtn = document.getElementById('startBtn');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const finalPoints = document.getElementById('finalPoints');
+const restartBtn = document.getElementById('restartBtn');
+const quizOverlay = document.getElementById('quizOverlay');
+const questionText = document.getElementById('questionText');
+const choicesContainer = document.getElementById('choicesContainer');
+const wrongOverlay = document.getElementById('wrongOverlay');
+const wrongText = document.getElementById('wrongText');
+const continueBtn = document.getElementById('continueBtn');
 
-  let player, spikes, orbs, gravity, jumpPower, gameSpeed, score, quizActive, running;
-  let questionIndex = 0;
-  let highs = JSON.parse(localStorage.getItem("capeHighScores")) || [];
+let player, obstacles, obstacleSpeed, points, questionIndex, gamePaused, gameStarted;
 
-  const questions = [
-    {q:"Which city is closest to Table Mountain?",o:["Cape Town","Johannesburg","Durban","Pretoria"],a:0},
-    {q:"What type of rock mainly forms Table Mountain?",o:["Granite","Sandstone","Limestone","Basalt"],a:1},
-    {q:"The Cape Floristic Region is famous for its:",o:["Rainforests","Fynbos","Savannas","Deserts"],a:1},
-    {q:"Which ocean borders the Cape Peninsula?",o:["Atlantic","Indian","Arctic","Pacific"],a:0},
-    {q:"What mountain range extends from the Cape to the Eastern Cape?",o:["Drakensberg","Cederberg","Hottentots-Holland","Outeniqua"],a:3},
-    {q:"What is the flat top of Table Mountain called?",o:["Plateau","Mesa","Summit","Peak"],a:1}
-  ];
-
-  function createPlayer() {
-    return { x:150, y:canvas.height-100, w:50, h:80, vy:0, jumping:false };
+// Questions
+let questions = [
+  {
+    question: "What is an NC cape?",
+    answer: "A cape is a piece of land that extends into a body of water",
+    choices: [
+      "A cape is a piece of land that extends into a body of water",
+      "A type of clothing worn by superheroes",
+      "A small mountain or hill",
+      "A type of ship used for trade"
+    ]
+  },
+  {
+    question: "What are the characteristics of a cape?",
+    answer: "Smaller in size, rather pointed, steep cliffs",
+    choices: [
+      "Smaller in size, rather pointed, steep cliffs",
+      "Flat and wide with gentle slopes",
+      "Covered mostly in forests",
+      "Always found near deserts"
+    ]
+  },
+  {
+    question: "How are capes formed?",
+    answer: "Capes are formed by erosion",
+    choices: [
+      "Capes are formed by erosion",
+      "Capes are formed by volcanic eruptions",
+      "Capes are formed by earthquakes",
+      "Capes are formed by human construction"
+    ]
+  },
+  {
+    question: "What is the ecological importance of capes?",
+    answer: "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.",
+    choices: [
+      "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.",
+      "Capes have no ecological importance.",
+      "Capes are used only for shipping and trade routes.",
+      "Capes are man-made structures for flood control."
+    ]
+  },
+  {
+    question: "When were capes discovered?",
+    answer: "The capes were discovered in 1488 by a Portuguese navigator.",
+    choices: [
+      "The capes were discovered in 1488 by a Portuguese navigator.",
+      "The capes were discovered in 1600 by a Spanish explorer.",
+      "The capes were discovered in 1200 by a British sailor.",
+      "The capes were discovered in 1805 by an Italian merchant."
+    ]
   }
+];
 
-  function reset() {
-    player=createPlayer(); spikes=[]; orbs=[];
-    gravity=0.3; jumpPower=-9; gameSpeed=6;
-    score=0; quizActive=false; running=true;
-    questionIndex = 0;
-    gameLoop();
+// Helper to shuffle choices
+function shuffleChoices(q) {
+  let choices = [...q.choices];
+  for (let i = choices.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [choices[i], choices[j]] = [choices[j], choices[i]];
   }
+  return choices;
+}
 
-  function jump() {
-    if(!player.jumping) { player.vy=jumpPower; player.jumping=true; }
-  }
+// Initialize game variables
+function initGame() {
+  player = { x: 50, y: 300, width: 50, height: 50, vy: 0 };
+  obstacles = [];
+  obstacleSpeed = 3;
+  points = 0;
+  questionIndex = 0;
+  gamePaused = false;
+  gameStarted = true;
+}
 
-  window.addEventListener("keydown", e=>{
-    if(e.code==="Space"&&!quizActive&&running) jump();
+// Quiz logic
+function showQuestion() {
+  gamePaused = true;
+  quizOverlay.style.display = 'flex';
+  let q = questions[questionIndex];
+  questionText.innerText = q.question;
+  let shuffled = shuffleChoices(q);
+  choicesContainer.innerHTML = '';
+  shuffled.forEach(choice => {
+    const div = document.createElement('div');
+    div.className = 'choice';
+    div.innerText = choice;
+    div.onclick = () => checkAnswer(choice, q.answer);
+    choicesContainer.appendChild(div);
   });
-  window.addEventListener("touchstart", ()=>{
-    if(!quizActive&&running) jump();
-  });
+}
 
-  function spike() {
-    spikes.push({x:canvas.width,y:canvas.height-60,w:40,h:60});
+function checkAnswer(selected, correct) {
+  quizOverlay.style.display = 'none';
+  if (selected === correct) {
+    gamePaused = false;
+    points += 1000;
+    questionIndex = (questionIndex + 1) % questions.length;
+  } else {
+    points -= 500;
+    wrongText.innerText = `You got it wrong! The correct answer is: ${correct}\n-500 points`;
+    wrongOverlay.style.display = 'flex';
   }
+}
 
-  function orb() {
-    orbs.push({x:canvas.width,y:canvas.height-120,r:20});
+continueBtn.onclick = () => {
+  wrongOverlay.style.display = 'none';
+  gamePaused = false;
+  questionIndex = (questionIndex + 1) % questions.length;
+}
+
+// Obstacle generation with improved ramps
+function addObstacle() {
+  let type = Math.random() < 0.5 ? 'spike' : 'ramp';
+  if (type === 'spike') {
+    let height = Math.random() * 50 + 20;
+    obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height, type: 'spike' });
+  } else {
+    let width = Math.random() * 60 + 40;  // variable ramp width
+    let height = Math.random() * 50 + 20; // variable ramp height
+    let color = height > 50 ? 'darkgreen' : 'green'; // steeper ramps darker
+    obstacles.push({ x: canvas.width, y: canvas.height - height, width, height, type: 'ramp', color });
   }
+}
 
-  function drawCartoonMountains() {
-    const groundHeight = canvas.height - 80;
-    ctx.fillStyle = "#87CEEB"; // sky
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#9cd3b0";
-    ctx.beginPath();
-    ctx.moveTo(0, groundHeight);
-    for(let x=0;x<=canvas.width;x+=150){
-      const y = groundHeight - 100 - Math.random()*80;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(canvas.width, groundHeight);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "#228B22";
-    ctx.fillRect(0, groundHeight, canvas.width, 100);
-  }
-
-  function gameLoop() {
-    if(!running) return;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    drawCartoonMountains();
-
+// Update loop
+function update() {
+  if (!gamePaused && gameStarted) {
+    player.vy += 0.5;
     player.y += player.vy;
-    player.vy += gravity;
-    if(player.y > canvas.height - 100) {
-      player.y = canvas.height - 100;
-      player.vy = 0;
-      player.jumping = false;
-    }
+    if (player.y + player.height > canvas.height) { player.y = canvas.height - player.height; player.vy = 0; }
 
-    ctx.fillStyle = "#222";
-    ctx.fillRect(player.x, player.y - player.h, player.w, player.h);
+    obstacles.forEach(o => o.x -= obstacleSpeed);
+    obstacles = obstacles.filter(o => o.x + o.width > 0);
 
-    if(Math.random() < 0.01) spike();
-    spikes.forEach((s,i)=>{
-      s.x -= gameSpeed;
-      ctx.beginPath();
-      ctx.moveTo(s.x,s.y);
-      ctx.lineTo(s.x+s.w/2,s.y-s.h);
-      ctx.lineTo(s.x+s.w,s.y);
-      ctx.closePath();
-      ctx.fillStyle="#654321";
-      ctx.fill();
-      if(s.x+s.w<0)spikes.splice(i,1);
-      if(player.x<s.x+s.w && player.x+player.w>s.x && player.y>s.y-s.h) end();
-    });
+    if (Math.random() < 0.02 + points / 50000) addObstacle();
 
-    if(Math.random() < 0.005) orb();
-    orbs.forEach((o,i)=>{
-      o.x -= gameSpeed;
-      ctx.beginPath();
-      ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
-      ctx.fillStyle="gold";
-      ctx.fill();
-      if(o.x+o.r<0)orbs.splice(i,1);
-      if(player.x<o.x+o.r && player.x+player.w>o.x-o.r &&
-         player.y-player.h<o.y+o.r && player.y>o.y-o.r) {
-        orbs.splice(i,1);
-        quiz();
+    // Collision detection
+    obstacles.forEach(o => {
+      if (o.type === 'spike') {
+        if (player.x < o.x + o.width && player.x + player.width > o.x &&
+            player.y < o.y + o.height && player.y + player.height > o.y) {
+          showQuestion();
+        }
+      } else if (o.type === 'ramp') {
+        let rampTopY = o.y;
+        let rampLeftX = o.x;
+        let rampRightX = o.x + o.width;
+
+        if (player.x + player.width > rampLeftX && player.x < rampRightX) {
+          if (player.y + player.height > rampTopY) {
+            // Land on top
+            player.y = rampTopY - player.height;
+            player.vy = 0;
+          }
+        }
       }
     });
 
-    score++;
-    if(score%500===0) gameSpeed += 0.4;
-
-    ctx.fillStyle="black";
-    ctx.font="24px Trebuchet MS";
-    ctx.fillText("Score: " + score, 20, 40);
-
-    if(!quizActive) requestAnimationFrame(gameLoop);
+    if (points < -2000) triggerGameOver(); // optional game-over condition
   }
+}
 
-  function quiz() {
-    quizActive = true;
-    if(questionIndex >= questions.length) questionIndex = 0;
-    const q = questions[questionIndex++];
-    quizQuestion.textContent = q.q;
-    quizOptions.innerHTML = "";
-    q.o.forEach((opt,i)=>{
-      const b=document.createElement("button");
-      b.textContent = opt;
-      b.onclick = ()=>{
-        if(i===q.a) score += 100;
-        quizPopup.classList.add("hidden");
-        quizActive=false;
-        gameLoop();
-      };
-      quizOptions.appendChild(b);
-    });
-    quizPopup.classList.remove("hidden");
+// Draw loop
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!gameStarted) return;
+
+  ctx.fillStyle = 'red';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+
+  obstacles.forEach(o => {
+    if (o.type === 'spike') {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(o.x, o.y, o.width, o.height);
+    } else if (o.type === 'ramp') {
+      ctx.fillStyle = o.color;
+      ctx.beginPath();
+      ctx.moveTo(o.x, o.y + o.height);
+      ctx.lineTo(o.x + o.width, o.y + o.height);
+      ctx.lineTo(o.x + o.width, o.y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+
+  ctx.fillStyle = 'white';
+  ctx.font = '20px Arial';
+  ctx.fillText('Points: ' + points, 10, 30);
+}
+
+// Game over
+function triggerGameOver() {
+  gameStarted = false;
+  gameOverScreen.style.display = 'flex';
+  finalPoints.innerText = `Your Points: ${points}`;
+}
+
+// Main loop
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// Controls
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && player.y + player.height >= canvas.height) {
+    player.vy = -10;
   }
+});
 
-  function end() {
-    running = false;
-    canvas.classList.add("hidden");
-    gameOverScreen.classList.remove("hidden");
-    finalScore.textContent = `Your Score: ${score}`;
-  }
-
-  saveScoreButton.onclick = () => {
-    const name = playerNameInput.value.trim() || "Player";
-    highs.push({name,score});
-    highs.sort((a,b)=>b.score-a.score);
-    highs = highs.slice(0,5);
-    localStorage.setItem("capeHighScores", JSON.stringify(highs));
-    location.reload();
-  };
-
-  startButton.onclick = () => {
-    startScreen.classList.add("fade");
-    startScreen.classList.add("hide");
-    setTimeout(()=>{
-      startScreen.classList.add("hidden");
-      canvas.classList.remove("hidden");
-      reset();
-    }, 800);
-  };
-
-  restartButton.onclick = () => {
-    gameOverScreen.classList.add("hidden");
-    canvas.classList.remove("hidden");
-    reset();
-  };
-
-  function showScores() {
-    scoreList.innerHTML = "";
-    highs.forEach(s=>{
-      const li=document.createElement("li");
-      li.textContent = `${s.name}: ${s.score}`;
-      scoreList.appendChild(li);
-    });
-  }
-  showScores();
+// Start & restart buttons
+startBtn.onclick = () => {
+  startScreen.style.display = 'none';
+  initGame();
 };
+
+restartBtn.onclick = () => {
+  gameOverScreen.style.display = 'none';
+  initGame();
+};
+
+loop();
