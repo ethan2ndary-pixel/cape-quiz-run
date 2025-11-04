@@ -3,228 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <title>Cape Escape</title>
-<style>
-  body { margin: 0; font-family: Arial, sans-serif; }
-  canvas { background: url('cartoon-background.png') no-repeat center center; background-size: cover; display: block; margin: 0 auto; }
-  #quizOverlay, #wrongOverlay { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.7); color: #fff; display: flex; 
-    flex-direction: column; align-items: center; justify-content: center; 
-    font-size: 20px; z-index: 10; 
-  }
-  .choice { margin: 10px; padding: 10px 20px; background: #222; cursor: pointer; border-radius: 5px; }
-  .choice:hover { background: #555; }
-  button { padding: 10px 20px; font-size: 18px; margin-top: 20px; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <canvas id="gameCanvas" width="800" height="400"></canvas>
 
+<!-- Start screen -->
+<div id="startScreen">
+  <h1>Cape Escape</h1>
+  <button id="startBtn">Play</button>
+</div>
+
+<!-- Quiz overlay -->
 <div id="quizOverlay" style="display:none;">
   <div id="questionText"></div>
   <div id="choicesContainer"></div>
 </div>
 
+<!-- Wrong answer overlay -->
 <div id="wrongOverlay" style="display:none;">
   <div id="wrongText"></div>
-  <button id="continueBtn">Play</button>
+  <button id="continueBtn">Continue</button>
 </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+<!-- Game over screen -->
+<div id="gameOverScreen" style="display:none;">
+  <h1>Game Over</h1>
+  <p id="finalPoints"></p>
+  <button id="restartBtn">Restart</button>
+</div>
 
-let player = { x: 50, y: 300, width: 50, height: 50, vy: 0 };
-let obstacles = [];
-let obstacleSpeed = 3;
-let points = 0;
-let questionIndex = 0;
-let gamePaused = false;
-
-// Questions array
-let questions = [
-  {
-    question: "What is an NC cape?",
-    answer: "A cape is a piece of land that extends into a body of water",
-    choices: [
-      "A cape is a piece of land that extends into a body of water",
-      "A type of clothing worn by superheroes",
-      "A small mountain or hill",
-      "A type of ship used for trade"
-    ]
-  },
-  {
-    question: "What are the characteristics of a cape?",
-    answer: "Smaller in size, rather pointed, steep cliffs",
-    choices: [
-      "Smaller in size, rather pointed, steep cliffs",
-      "Flat and wide with gentle slopes",
-      "Covered mostly in forests",
-      "Always found near deserts"
-    ]
-  },
-  {
-    question: "How are capes formed?",
-    answer: "Capes are formed by erosion",
-    choices: [
-      "Capes are formed by erosion",
-      "Capes are formed by volcanic eruptions",
-      "Capes are formed by earthquakes",
-      "Capes are formed by human construction"
-    ]
-  },
-  {
-    question: "What is the ecological importance of capes?",
-    answer: "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.",
-    choices: [
-      "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.",
-      "Capes have no ecological importance.",
-      "Capes are used only for shipping and trade routes.",
-      "Capes are man-made structures for flood control."
-    ]
-  },
-  {
-    question: "When were capes discovered?",
-    answer: "The capes were discovered in 1488 by a Portuguese navigator.",
-    choices: [
-      "The capes were discovered in 1488 by a Portuguese navigator.",
-      "The capes were discovered in 1600 by a Spanish explorer.",
-      "The capes were discovered in 1200 by a British sailor.",
-      "The capes were discovered in 1805 by an Italian merchant."
-    ]
-  },
-  {
-    question: "Question 6 placeholder",
-    answer: "Answer 6 placeholder",
-    choices: [
-      "Answer 6 placeholder",
-      "Wrong 1",
-      "Wrong 2",
-      "Wrong 3"
-    ]
-  }
-];
-
-// Randomize choices helper
-function shuffleChoices(q) {
-  let choices = [...q.choices];
-  for (let i = choices.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
-    [choices[i], choices[j]] = [choices[j], choices[i]];
-  }
-  return choices;
-}
-
-// Quiz logic
-const quizOverlay = document.getElementById('quizOverlay');
-const questionText = document.getElementById('questionText');
-const choicesContainer = document.getElementById('choicesContainer');
-const wrongOverlay = document.getElementById('wrongOverlay');
-const wrongText = document.getElementById('wrongText');
-const continueBtn = document.getElementById('continueBtn');
-
-function showQuestion() {
-  gamePaused = true;
-  quizOverlay.style.display = 'flex';
-  let q = questions[questionIndex];
-  questionText.innerText = q.question;
-  let shuffled = shuffleChoices(q);
-  choicesContainer.innerHTML = '';
-  shuffled.forEach(choice => {
-    const div = document.createElement('div');
-    div.className = 'choice';
-    div.innerText = choice;
-    div.onclick = () => checkAnswer(choice, q.answer);
-    choicesContainer.appendChild(div);
-  });
-}
-
-function checkAnswer(selected, correct) {
-  quizOverlay.style.display = 'none';
-  if (selected === correct) {
-    gamePaused = false;
-    points += 1000;
-    questionIndex = (questionIndex + 1) % questions.length;
-  } else {
-    points -= 500;
-    wrongText.innerText = `You got it wrong! The correct answer is: ${correct}\n-500 points`;
-    wrongOverlay.style.display = 'flex';
-  }
-}
-
-continueBtn.onclick = () => {
-  wrongOverlay.style.display = 'none';
-  gamePaused = false;
-  questionIndex = (questionIndex + 1) % questions.length;
-}
-
-// Obstacle generation
-function addObstacle() {
-  let height = Math.random() * 50 + 20;
-  obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height });
-}
-
-// Game loop
-function update() {
-  if (!gamePaused) {
-    player.vy += 0.5;
-    player.y += player.vy;
-    if (player.y + player.height > canvas.height) { player.y = canvas.height - player.height; player.vy = 0; }
-
-    // Move obstacles
-    obstacles.forEach(o => o.x -= obstacleSpeed);
-
-    // Remove offscreen obstacles
-    obstacles = obstacles.filter(o => o.x + o.width > 0);
-
-    // Add new obstacles over time
-    if (Math.random() < 0.02 + points / 50000) { // more points = more obstacles
-      addObstacle();
-    }
-
-    // Collision detection
-    obstacles.forEach(o => {
-      if (player.x < o.x + o.width && player.x + player.width > o.x &&
-          player.y < o.y + o.height && player.y + player.height > o.y) {
-        // Trigger question on collision
-        showQuestion();
-      }
-    });
-  }
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw player
-  ctx.fillStyle = 'red';
-  ctx.fillRect(player.x, player.y, player.width, player.height);
-
-  // Draw obstacles
-  ctx.fillStyle = 'black';
-  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
-
-  // Draw points
-  ctx.fillStyle = 'white';
-  ctx.font = '20px Arial';
-  ctx.fillText('Points: ' + points, 10, 30);
-}
-
-function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-// Jump controls
-window.addEventListener('keydown', e => {
-  if (e.code === 'Space' && player.y + player.height >= canvas.height) {
-    player.vy = -10;
-  }
-});
-
-loop();
-</script>
+<script src="game.js"></script>
 </body>
 </html>
