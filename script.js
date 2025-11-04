@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', () => {
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -7,6 +8,8 @@ const startBtn = document.getElementById('startBtn');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const finalPoints = document.getElementById('finalPoints');
 const restartBtn = document.getElementById('restartBtn');
+const highScoreStart = document.getElementById('highScoreStart');
+const highScoreGameOver = document.getElementById('highScoreGameOver');
 const quizOverlay = document.getElementById('quizOverlay');
 const questionText = document.getElementById('questionText');
 const choicesContainer = document.getElementById('choicesContainer');
@@ -15,6 +18,10 @@ const wrongText = document.getElementById('wrongText');
 const continueBtn = document.getElementById('continueBtn');
 
 let player, obstacles, obstacleSpeed, points, questionIndex, gamePaused, gameStarted;
+
+// Load high score from localStorage
+let highScore = localStorage.getItem('capeEscapeHighScore') || 0;
+highScoreStart.innerText = highScore;
 
 // Quiz questions
 const questions = [
@@ -25,7 +32,7 @@ const questions = [
   { question: "When were capes discovered?", answer: "The capes were discovered in 1488 by a Portuguese navigator.", choices: ["The capes were discovered in 1488 by a Portuguese navigator.", "The capes were discovered in 1600 by a Spanish explorer.", "The capes were discovered in 1200 by a British sailor.", "The capes were discovered in 1805 by an Italian merchant."] }
 ];
 
-// Shuffle multiple-choice answers
+// Shuffle choices
 function shuffleChoices(q) {
   const choices = [...q.choices];
   for (let i = choices.length - 1; i > 0; i--) {
@@ -35,7 +42,7 @@ function shuffleChoices(q) {
   return choices;
 }
 
-// Initialize game variables
+// Initialize game
 function initGame() {
   player = { x: 50, y: 300, width: 50, height: 50, vy: 0 };
   obstacles = [];
@@ -43,7 +50,7 @@ function initGame() {
   points = 0;
   questionIndex = 0;
   gamePaused = false;
-  gameStarted = true; // Start the game loop
+  gameStarted = true;
 }
 
 // Start button
@@ -58,7 +65,7 @@ restartBtn.addEventListener('click', () => {
   initGame();
 });
 
-// Show quiz question
+// Show question
 function showQuestion() {
   gamePaused = true;
   quizOverlay.style.display = 'flex';
@@ -75,7 +82,7 @@ function showQuestion() {
   });
 }
 
-// Check quiz answer
+// Check answer
 function checkAnswer(selected, correct) {
   quizOverlay.style.display = 'none';
   if (selected === correct) {
@@ -95,7 +102,7 @@ continueBtn.onclick = () => {
   questionIndex = (questionIndex + 1) % questions.length;
 };
 
-// Add obstacles (spikes + ramps)
+// Add obstacles
 function addObstacle() {
   const type = Math.random() < 0.5 ? 'spike' : 'ramp';
   if (type === 'spike') {
@@ -109,7 +116,7 @@ function addObstacle() {
   }
 }
 
-// Update game state
+// Update game
 function update() {
   if (!gamePaused && gameStarted) {
     player.vy += 0.5;
@@ -144,7 +151,7 @@ function update() {
   }
 }
 
-// Draw game
+// Draw
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!gameStarted) return;
@@ -158,12 +165,7 @@ function draw() {
       ctx.fillRect(o.x, o.y, o.width, o.height);
     } else if (o.type === 'ramp') {
       ctx.fillStyle = o.color;
-      ctx.beginPath();
-      ctx.moveTo(o.x, o.y + o.height);
-      ctx.lineTo(o.x + o.width, o.y + o.height);
-      ctx.lineTo(o.x + o.width, o.y);
-      ctx.closePath();
-      ctx.fill();
+      ctx.fillRect(o.x, o.y, o.width, o.height);
     }
   });
 
@@ -177,6 +179,14 @@ function triggerGameOver() {
   gameStarted = false;
   gameOverScreen.style.display = 'flex';
   finalPoints.innerText = `Your Points: ${points}`;
+
+  if (points > highScore) {
+    highScore = points;
+    localStorage.setItem('capeEscapeHighScore', highScore);
+  }
+
+  highScoreGameOver.innerText = highScore;
+  highScoreStart.innerText = highScore;
 }
 
 // Main loop
@@ -187,9 +197,10 @@ function loop() {
 }
 loop();
 
-// Player controls
+// Controls
 window.addEventListener('keydown', e => {
   if (e.code === 'Space' && player.y + player.height >= canvas.height) {
     player.vy = -10;
   }
+});
 });
