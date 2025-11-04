@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+// All JS runs AFTER DOM because <script> is at the end
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -19,7 +19,7 @@ const continueBtn = document.getElementById('continueBtn');
 
 let player, obstacles, obstacleSpeed, points, questionIndex, gamePaused, gameStarted;
 
-// Load high score from localStorage
+// Load high score
 let highScore = localStorage.getItem('capeEscapeHighScore') || 0;
 highScoreStart.innerText = highScore;
 
@@ -151,7 +151,7 @@ function update() {
   }
 }
 
-// Draw
+// Draw game
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!gameStarted) return;
@@ -160,13 +160,8 @@ function draw() {
   ctx.fillRect(player.x, player.y, player.width, player.height);
 
   obstacles.forEach(o => {
-    if (o.type === 'spike') {
-      ctx.fillStyle = 'black';
-      ctx.fillRect(o.x, o.y, o.width, o.height);
-    } else if (o.type === 'ramp') {
-      ctx.fillStyle = o.color;
-      ctx.fillRect(o.x, o.y, o.width, o.height);
-    }
+    ctx.fillStyle = o.type === 'spike' ? 'black' : o.color;
+    ctx.fillRect(o.x, o.y, o.width, o.height);
   });
 
   ctx.fillStyle = 'white';
@@ -202,5 +197,4 @@ window.addEventListener('keydown', e => {
   if (e.code === 'Space' && player.y + player.height >= canvas.height) {
     player.vy = -10;
   }
-});
 });
