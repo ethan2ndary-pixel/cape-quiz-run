@@ -18,56 +18,11 @@ let player, obstacles, obstacleSpeed, points, questionIndex, gamePaused, gameSta
 
 // Quiz questions
 const questions = [
-  {
-    question: "What is an NC cape?",
-    answer: "A cape is a piece of land that extends into a body of water",
-    choices: [
-      "A cape is a piece of land that extends into a body of water",
-      "A type of clothing worn by superheroes",
-      "A small mountain or hill",
-      "A type of ship used for trade"
-    ]
-  },
-  {
-    question: "What are the characteristics of a cape?",
-    answer: "Smaller in size, rather pointed, steep cliffs",
-    choices: [
-      "Smaller in size, rather pointed, steep cliffs",
-      "Flat and wide with gentle slopes",
-      "Covered mostly in forests",
-      "Always found near deserts"
-    ]
-  },
-  {
-    question: "How are capes formed?",
-    answer: "Capes are formed by erosion",
-    choices: [
-      "Capes are formed by erosion",
-      "Capes are formed by volcanic eruptions",
-      "Capes are formed by earthquakes",
-      "Capes are formed by human construction"
-    ]
-  },
-  {
-    question: "What is the ecological importance of capes?",
-    answer: "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.",
-    choices: [
-      "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.",
-      "Capes have no ecological importance.",
-      "Capes are used only for shipping and trade routes.",
-      "Capes are man-made structures for flood control."
-    ]
-  },
-  {
-    question: "When were capes discovered?",
-    answer: "The capes were discovered in 1488 by a Portuguese navigator.",
-    choices: [
-      "The capes were discovered in 1488 by a Portuguese navigator.",
-      "The capes were discovered in 1600 by a Spanish explorer.",
-      "The capes were discovered in 1200 by a British sailor.",
-      "The capes were discovered in 1805 by an Italian merchant."
-    ]
-  }
+  { question: "What is an NC cape?", answer: "A cape is a piece of land that extends into a body of water", choices: ["A cape is a piece of land that extends into a body of water", "A type of clothing worn by superheroes", "A small mountain or hill", "A type of ship used for trade"] },
+  { question: "What are the characteristics of a cape?", answer: "Smaller in size, rather pointed, steep cliffs", choices: ["Smaller in size, rather pointed, steep cliffs", "Flat and wide with gentle slopes", "Covered mostly in forests", "Always found near deserts"] },
+  { question: "How are capes formed?", answer: "Capes are formed by erosion", choices: ["Capes are formed by erosion", "Capes are formed by volcanic eruptions", "Capes are formed by earthquakes", "Capes are formed by human construction"] },
+  { question: "What is the ecological importance of capes?", answer: "Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.", choices: ["Capes are coastal promontories that serve as ecological hot spots, providing a variety of critical ecosystem services.", "Capes have no ecological importance.", "Capes are used only for shipping and trade routes.", "Capes are man-made structures for flood control."] },
+  { question: "When were capes discovered?", answer: "The capes were discovered in 1488 by a Portuguese navigator.", choices: ["The capes were discovered in 1488 by a Portuguese navigator.", "The capes were discovered in 1600 by a Spanish explorer.", "The capes were discovered in 1200 by a British sailor.", "The capes were discovered in 1805 by an Italian merchant."] }
 ];
 
 // Shuffle multiple-choice answers
@@ -88,7 +43,7 @@ function initGame() {
   points = 0;
   questionIndex = 0;
   gamePaused = false;
-  gameStarted = true;
+  gameStarted = true; // Start the game loop
 }
 
 // Start button
@@ -140,15 +95,15 @@ continueBtn.onclick = () => {
   questionIndex = (questionIndex + 1) % questions.length;
 };
 
-// Add obstacles (spikes + improved ramps)
+// Add obstacles (spikes + ramps)
 function addObstacle() {
   const type = Math.random() < 0.5 ? 'spike' : 'ramp';
   if (type === 'spike') {
     const height = Math.random() * 50 + 20;
     obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height, type: 'spike' });
   } else {
-    const width = Math.random() * 60 + 40; // 40-100 px
-    const height = Math.random() * 50 + 20; // 20-70 px
+    const width = Math.random() * 60 + 40;
+    const height = Math.random() * 50 + 20;
     const color = height > 50 ? 'darkgreen' : 'green';
     obstacles.push({ x: canvas.width, y: canvas.height - height, width, height, type: 'ramp', color });
   }
@@ -159,10 +114,7 @@ function update() {
   if (!gamePaused && gameStarted) {
     player.vy += 0.5;
     player.y += player.vy;
-    if (player.y + player.height > canvas.height) {
-      player.y = canvas.height - player.height;
-      player.vy = 0;
-    }
+    if (player.y + player.height > canvas.height) { player.y = canvas.height - player.height; player.vy = 0; }
 
     obstacles.forEach(o => o.x -= obstacleSpeed);
     obstacles = obstacles.filter(o => o.x + o.width > 0);
@@ -235,7 +187,7 @@ function loop() {
 }
 loop();
 
-// Controls
+// Player controls
 window.addEventListener('keydown', e => {
   if (e.code === 'Space' && player.y + player.height >= canvas.height) {
     player.vy = -10;
